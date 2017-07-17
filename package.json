@@ -1,0 +1,25 @@
+{
+  "name": "sachathescheduler",
+  "version": "1.0.0",
+  "description": "Test schedule bot week1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tifchang/sachathescheduler.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.x.x",
+    "body-parser": "^1.x.x",
+    "request": "2.56.x"
+  },
+  "bugs": {
+    "url": "https://github.com/tifchang/sachathescheduler/issues"
+  },
+  "homepage": "https://github.com/tifchang/sachathescheduler#readme"
+}
