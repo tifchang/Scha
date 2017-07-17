@@ -14,8 +14,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.x.x",
+    "axios": "^0.16.2",
     "body-parser": "^1.x.x",
+    "express": "^4.x.x",
     "request": "2.56.x"
   },
   "bugs": {
