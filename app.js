@@ -1,77 +1,55 @@
-var axios = require('axios');
 
-var bot = require('./bot.js');
 
-var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 
-var bot_token = 'xoxb-213951919538-fnBfDUHwsBdehp23Wbr0nZMI';
+// write express server in bot.js  and require it in here
+// sends link to user --> when you click on it it will send a request to express
+var express = require('express');
+var bodyParser = require('body-parser');
 
-var rtm = new RtmClient(bot_token);
+var app = express();
+var port = process.env.PORT || 3000;
 
-var web = new WebClient(bot_token);
+// body parser middleware
+app.use(bodyParser.urlencoded({ extended: true }));
 
-rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
-  console.log(rtmStartData.self.name);
-})
-
-rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
-  console.log(msg);
-  if (msg.bot_id) {
-    return;
-  }
-  web.chat.postMessage(msg.channel, "test", {
-    attachments: [
-        {
-            "text": "Choose a game to play",
-            "fallback": "You are unable to choose a game",
-            "callback_id": "wopr_game",
-            "color": "#3AA3E3",
-            "attachment_type": "default",
-            "actions": [
-                {
-                    "name": "game",
-                    "text": "Chess",
-                    "type": "button",
-                    "value": "chess"
-                },
-                {
-                    "name": "game",
-                    "text": "Falken's Maze",
-                    "type": "button",
-                    "value": "maze"
-                },
-                {
-                    "name": "game",
-                    "text": "Thermonuclear War",
-                    "style": "danger",
-                    "type": "button",
-                    "value": "war",
-                    "confirm": {
-                        "title": "Are you sure?",
-                        "text": "Wouldn't you prefer a good game of chess?",
-                        "ok_text": "Yes",
-                        "dismiss_text": "No"
-                    }
-                }
-            ]
-        }
-    ]
+// test route
+app.get('/hello', function (req, res) {
+  const code = req.query.code;
+  res.send('Hello world!');
 });
-  rtm.sendMessage('rtm ' + msg.text, msg.channel);
 
-  // console.log(msg);
-  // axios.get('https://api.api.ai/api/query?v=20150910&query=hi%20tiff&lang=en&sessionId=eabd5e33-630e-4ce3-894e-fc12ac3b0007&timezone=2017-07-17T14:01:03-0700',
-  // {headers: {
-  //   'Authorization': 'Bearer 52da7b1243444adfb8d42bb5f51b07a3'
-  // }})
-  // .then((res) => {
-  //   console.log('result', res);
-  //   // rtm.sendMessage('completed', msg.channel);
-  //
-  // })
-  // .catch((err) => {
-  //   console.log(err);
-  // })
-})
+app.post('/hello', function (req, res, next) {
+  console.log('response', JSON.parse(req.body.payload).actions);
+  // var userName = req.body.user_name;
+  // var botPayload = {
+  //   text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
+  // };
+  // // Loop otherwise..
+  // if (userName !== 'slackbot') {
+  //   return res.status(200).json(botPayload);
+  // } else {
+  if (JSON.parse(req.body.payload).actions[0].value === 'bad') {
+    res.send('Okay we will not recommend');
+  } else {
+    res.send('I KNOW ITS THE SHIT');
+  }
 
-rtm.start();
+  // }
+});
+
+// app.post('/login', function (req, res, next) {
+//   var userName = req.body.user_name;
+//   var botPayload = {
+//     text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
+//   };
+//   // Loop otherwise..
+//   if (userName !== 'slackbot') {
+//     return res.status(200).json(botPayload);
+//   } else {
+//     return res.status(200).end();
+//   }
+// });
+
+app.listen(port, function () {
+  console.log('Listening on port ' + port);
+});

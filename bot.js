@@ -1,44 +1,77 @@
-// write express server in bot.js  and require it in here
-// sends link to user --> when you click on it it will send a request to express
-var express = require('express');
-var bodyParser = require('body-parser');
+var axios = require('axios');
 
-var app = express();
-var port = process.env.PORT || 3000;
+var bot = require('./app.js');
 
-// body parser middleware
-app.use(bodyParser.urlencoded({ extended: true }));
+var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 
-// test route
-app.get('/', function (req, res) { res.status(200).send('Hello world!'); });
+var bot_token = 'xoxb-213951919538-fnBfDUHwsBdehp23Wbr0nZMI';
 
-app.post('/hello', function (req, res, next) {
-  console.log('response', JSON.parse(req.body.payload).actions);
-  // var userName = req.body.user_name;
-  // var botPayload = {
-  //   text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
-  // };
-  // // Loop otherwise..
-  // if (userName !== 'slackbot') {
-  //   return res.status(200).json(botPayload);
-  // } else {
-    return res.status(200).end();
-  // }
-});
+var rtm = new RtmClient(bot_token);
 
-app.post('/login', function (req, res, next) {
-  var userName = req.body.user_name;
-  var botPayload = {
-    text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
-  };
-  // Loop otherwise..
-  if (userName !== 'slackbot') {
-    return res.status(200).json(botPayload);
-  } else {
-    return res.status(200).end();
+var web = new WebClient(bot_token);
+
+rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
+  console.log(rtmStartData.self.name);
+})
+
+rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
+
+  //ensure the bot will ignore the message if it is not sent via DM
+  var dm = rtm.dataStore.getDMByUserId(msg.user);
+  if (!dm || dm.id !== msg.channel || msg.type !== 'message') {
+    return;
   }
+  web.chat.postMessage(msg.channel, 'sjdflksjf', {
+    "text": "New comic book alert!",
+    "attachments": [
+        {
+            "fallback": "Would you recommend it to customers?",
+            "title": "Would you recommend it to customers?",
+            "callback_id": "comic_1234_xyz",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
+            "actions": [
+                {
+                    "name": "recommend",
+                    "text": "Recommend",
+                    "type": "button",
+                    "value": "recommend"
+                },
+                {
+                    "name": "no",
+                    "text": "No",
+                    "type": "button",
+                    "value": "bad"
+                }
+            ]
+        }
+    ]
 });
 
-app.listen(port, function () {
-  console.log('Listening on port ' + port);
-});
+  // rtm.sendMessage(msg.text, msg.channel);
+
+//   axios.get('https://api.api.ai/api/query', {
+//     params: {
+//       v: 20150910,
+//       lang: 'en',
+//       timezone: '2017-07-17T14:01:03-0700',
+//       query: 'hi tiff',
+//       sessionId: msg.user
+//     },
+//     headers: {
+//       'Authorization': 'Bearer 52da7b1243444adfb8d42bb5f51b07a3'
+//     }
+//   })
+//   .then((res) => {
+//     if (res.data.result.actionIncomplete) {
+//       rtm.sendMessage(data.result.fulfilment.speech, msg.channel)
+//     } else {
+//       rtm.sendMessage(res.data.result.resolvedQuery, msg.channel);
+//     }
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   })
+// })
+
+rtm.start();
