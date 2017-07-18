@@ -23,7 +23,7 @@ app.post('/hello', function (req, res, next) {
   }
 });
 
-app.post('/login', function (req, res, next) {
+app.get('/login', function (req, res, next) {
   var userName = req.body.user_name;
   var botPayload = {
     text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'

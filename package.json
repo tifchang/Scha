@@ -14,8 +14,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.x.x",
+    "@slack/client": "^3.10.0",
     "body-parser": "^1.x.x",
+    "express": "^4.x.x",
     "request": "2.56.x"
   },
   "bugs": {
