@@ -4,9 +4,9 @@ var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 
-var bot = require('./bot.js');
 var Models = require('./models/models');
 var User = Models.User;
+var Task = Models.Task;
 
 
 var app = express();
@@ -19,7 +19,9 @@ if (!process.env.MONGODB_URI || !process.env.CLIENT_SECRET) {
 
 mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGODB_URI);
-mongoose.connection.on('error', console.error);
+mongoose.connection.on('mongoose error', console.error);
+
+var bot = require('./bot.js');
 
 // body parser middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -30,35 +32,72 @@ app.get('/hello', function (req, res) {
   res.send('Hello world!');
 });
 
-app.post('/hello', function (req, res, next) {
-  console.log('response', JSON.parse(req.body.payload));
-  // var userName = req.body.user_name;
-  // var botPayload = {
-  //   text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
-  // };
-  // // Loop otherwise..
-  // if (userName !== 'slackbot') {
-  //   return res.status(200).json(botPayload);
-  // } else {
+app.post('/message', function (req, res, next) {
+  var slackId = JSON.parse(req.body.payload).callback_id;
   if (JSON.parse(req.body.payload).actions[0].value === 'bad') {
     res.send('Okay I canceled your request!');
   } else {
-    res.send('Okay request has been submitted!');
+    //call function to add the reminder to google calendar
+    new Task({
+      subject: subject,
+      day: new Date(date),
+      requesterId: userId
+    }).save()
+    .then(function(user) {
+      res.send('Okay request has been submitted!');
+    })
+
   }
 
 });
 
 app.get('/connect/success', function(req, res) {
-
+  res.send('Connect success')
 });
+
 
 app.get('/connect/callback', function(req, res) {
+  var code = req.query.code;
+  var state = req.query.state;
 
+  //get credentials
+  var credentials = JSON.parse(process.env.CLIENT_SECRET);
+  var clientSecret = credentials.web.client_secret;
+  var clientId = credentials.web.client_id;
+  var redirectUrl = credentials.web.redirect_uris[0] + '/connect/callback';
+
+  //set up auth
+  var auth = new googleAuth();
+  var googleAuthorization = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+
+  googleAuthorization.getToken(code, function(err, tokens) {
+    if (err) {
+      res.send('Error', err);
+    } else {
+      googleAuthorization.setCredentials(tokens);
+      var plus = google.plus('v1');
+      plus.people.get({auth: googleAuthorization, userId: 'me'}, function(err, googleUser) {
+        User.findById(JSON.parse(decodeURIComponent(state)).auth_id)
+        .then(function(mongoUser) {
+          mongoUser.google = tokens;
+          if (googleUser) {
+            mongoUser.google.profile_id = googleUser.Id
+            mongoUser.google.profile_name = googleUser.displayName
+          }
+          return mongoUser.save();
+        })
+        .then(function(mongoUser) {
+          // res.json(mongoUser);
+          res.redirect('/connect/success');
+        })
+      })
+    }
+  })
 });
 
-app.post('/connect', function(req, res) {
+app.get('/connect', function(req, res) {
   //get slack_id
-  var slackId = req.body.user;
+  var userId = req.query.user;
 
   //get credentials
   var credentials = JSON.parse(process.env.CLIENT_SECRET);
@@ -70,12 +109,7 @@ app.post('/connect', function(req, res) {
   var auth = new googleAuth();
   var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
-  //add new user to MONGO_DB
-  var newUser = new User ({
-    slack_id: slackId,
-    token: null
-  });
-
+  //create url
   var url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
@@ -84,25 +118,13 @@ app.post('/connect', function(req, res) {
       'https://www.googleapis.com/auth/calendar'
     ],
     state: encodeURIComponent(JSON.stringify({
-      auth_id: req.query.auth_id
+      auth_id: userId
     }))
   });
 
   res.redirect(url);
-});
 
-// app.post('/login', function (req, res, next) {
-//   var userName = req.body.user_name;
-//   var botPayload = {
-//     text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
-//   };
-//   // Loop otherwise..
-//   if (userName !== 'slackbot') {
-//     return res.status(200).json(botPayload);
-//   } else {
-//     return res.status(200).end();
-//   }
-// });
+});
 
 app.listen(port, function () {
   console.log('Listening on port ' + port);
