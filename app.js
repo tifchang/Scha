@@ -18,8 +18,7 @@ app.get('/hello', function (req, res) {
   res.send('Hello world!');
 });
 
-app.post('/hello', function (req, res, next) {
-  console.log('response', JSON.parse(req.body.payload));
+app.post('/message', function (req, res, next) {
   // var userName = req.body.user_name;
   // var botPayload = {
   //   text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'

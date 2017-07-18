@@ -12,16 +12,23 @@ rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   console.log(rtmStartData.self.name);
 })
 
-rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
+let messageInProgess = false;
 
+rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
+  //when yes or no is clicked reset messageInProgess to be false
+  if (msg.message && msg.message.username === 'SachaTheScheduler') {
+    messageInProgess = false;
+  }
   //ensure the bot will ignore the message if it is not sent via DM
   var dm = rtm.dataStore.getDMByUserId(msg.user);
   if (!dm || dm.id !== msg.channel || msg.type !== 'message') {
     return;
   }
 
-  // rtm.sendMessage(msg.text, msg.channel);
-
+  if (messageInProgess) {
+    rtm.sendMessage('Please complete previous request!', msg.channel);
+    return;
+  }
   axios.get('https://api.api.ai/api/query', {
     params: {
       v: 20150910,
@@ -36,12 +43,13 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
   })
   .then((res) => {
     console.log(res.data.result);
-    if (res.data.result.actionIncomplete) {
+    if (res.data.result.actionIncomplete || res.data.result.action !== "remind.add") {
       rtm.sendMessage(res.data.result.fulfillment.speech, msg.channel)
+      return;
     } else {
+      messageInProgess = true;
       web.chat.postMessage(msg.channel, '', {
         "attachments": [
-            
             {
                 "fallback": "fallback",
                 "title": res.data.result.fulfillment.speech,
