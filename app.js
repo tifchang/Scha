@@ -6,6 +6,7 @@ var googleAuth = require('google-auth-library');
 
 var Models = require('./models/models');
 var User = Models.User;
+var Task = Models.Task;
 
 
 var app = express();
@@ -32,18 +33,20 @@ app.get('/hello', function (req, res) {
 });
 
 app.post('/message', function (req, res, next) {
-  // var userName = req.body.user_name;
-  // var botPayload = {
-  //   text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
-  // };
-  // // Loop otherwise..
-  // if (userName !== 'slackbot') {
-  //   return res.status(200).json(botPayload);
-  // } else {
+  var slackId = JSON.parse(req.body.payload).callback_id;
   if (JSON.parse(req.body.payload).actions[0].value === 'bad') {
     res.send('Okay I canceled your request!');
   } else {
-    res.send('Okay request has been submitted!');
+    //call function to add the reminder to google calendar
+    new Task({
+      subject: subject,
+      day: new Date(date),
+      requesterId: userId
+    }).save()
+    .then(function(user) {
+      res.send('Okay request has been submitted!');
+    })
+
   }
 
 });

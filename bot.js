@@ -15,14 +15,14 @@ rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   console.log(rtmStartData.self.name);
 })
 
-let messageInProgess = false;
+// let messageInProgess = false;
 
 rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
   //when yes or no is clicked reset messageInProgess to be false
   //FIX THIS
-  if (msg.message && msg.message.username === 'SachaTheScheduler') {
-    messageInProgess = false;
-  }
+  // if (msg.message && msg.message.username === 'SachaTheScheduler') {
+  //   messageInProgess = false;
+  // }
 
   //ensure the bot will ignore the message if it is not sent via DM
   var dm = rtm.dataStore.getDMByUserId(msg.user);
@@ -51,7 +51,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
         return;
     }
 
-    if (messageInProgess) {
+    if (user.pendingRequest) {
       rtm.sendMessage('Please complete previous request!', user.slackDmId);
       return;
     }
@@ -73,37 +73,69 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
         rtm.sendMessage(res.data.result.fulfillment.speech, user.slackDmId)
         return;
       } else if (res.data.result.action === "remind.add") {
-        user.pendingRequest = JSON.stringify(Object.assign({}, (res.data.result).parameters, {action: 'remind.add'}));
+        user.pendingRequest = JSON.stringify(Object.assign({}, (res.data.result).parameters, {action: 'remind.add', userId: user._id}));
         console.log("RESULT", user.pendingRequest);
         user.save()
         .then(function(user) {
           web.chat.postMessage(msg.channel, '', {
             "attachments": [
-                {
-                    "fallback": "fallback",
-                    "title": res.data.result.fulfillment.speech,
-                    "callback_id": msg.user,
-                    "color": "#3AA3E3",
-                    "attachment_type": "default",
-                    "actions": [
-                        {
-                            "name": "Yes",
-                            "text": "Yes",
-                            "type": "button",
-                            "value": "good"
-                        },
-                        {
-                            "name": "No",
-                            "text": "No",
-                            "type": "button",
-                            "value": "bad"
-                        }
-                    ]
-                }
+              {
+                "fallback": "fallback",
+                "title": res.data.result.fulfillment.speech,
+                "callback_id": msg.user,
+                "color": "#3AA3E3",
+                "attachment_type": "default",
+                "actions": [
+                  {
+                    "name": "Yes",
+                    "text": "Yes",
+                    "type": "button",
+                    "value": "good"
+                  },
+                  {
+                    "name": "No",
+                    "text": "No",
+                    "type": "button",
+                    "value": "bad"
+                  }
+                ]
+              }
             ]
-        });
+          })
+          user.pendingRequest = '';
+          user.save();
         })
-
+      } else if (res.data.result.action === "meeting.add") {
+        user.pendingRequest = JSON.stringify(Object.assign({}, (res.data.result).parameters, {action: 'meeting.add'}));
+        console.log("RESULT", user.pendingRequest);
+        user.save()
+        .then(function(user) {
+          web.chat.postMessage(msg.channel, '', {
+            "attachments": [
+              {
+                "fallback": "fallback",
+                "title": res.data.result.fulfillment.speech,
+                "callback_id": msg.user,
+                "color": "#3AA3E3",
+                "attachment_type": "default",
+                "actions": [
+                  {
+                    "name": "Yes",
+                    "text": "Yes",
+                    "type": "button",
+                    "value": "good"
+                  },
+                  {
+                    "name": "No",
+                    "text": "No",
+                    "type": "button",
+                    "value": "bad"
+                  }
+                ]
+              }
+            ]
+          });
+        })
       }
     })
     .catch((err) => {
