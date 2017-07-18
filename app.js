@@ -76,19 +76,25 @@ app.post('/connect', function(req, res) {
     token: null
   });
 
-  var url = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    prompt: 'consent',
-    scope: [
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/calendar'
-    ],
-    state: encodeURIComponent(JSON.stringify({
-      auth_id: req.query.auth_id
-    }))
-  });
+  newUser.save(function(err, user) {
+    if (err) {
+      res.json({failure: err});
+    } else {
+      var url = oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        prompt: 'consent',
+        scope: [
+          'https://www.googleapis.com/auth/userinfo.profile',
+          'https://www.googleapis.com/auth/calendar'
+        ],
+        state: encodeURIComponent(JSON.stringify({
+          auth_id: user._id;
+        }))
+      });
 
-  res.redirect(url);
+      res.redirect(url);
+    }
+  })
 });
 
 // app.post('/login', function (req, res, next) {
