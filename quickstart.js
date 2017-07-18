@@ -4,6 +4,22 @@ var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 
+// MONGODB USER STORAGE
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+
+const MONGODB_URI=mongodb:'mongodb://tiff:hi@ds163672.mlab.com:63672/sachathescheduler'
+mongoose.Promise = global.Promise;
+mongoose.connect(process.env.MONGODB_URI);
+mongoose.connection.on('error', console.error);
+
+var UserSchema = new Schema ({
+  token: Object
+})
+
+var User = mongoose.model('User', UserSchema)
+
+// GOOGLE CALENDAR AUTH
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/calendar-nodejs-quickstart.json
 var SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
@@ -128,6 +144,3 @@ function listEvents(auth) {
     }
   });
 }
-
-
-
