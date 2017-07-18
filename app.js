@@ -53,7 +53,7 @@ app.get('/connect/success', function(req, res) {
 });
 
 app.get('/connect/callback', function(req, res) {
-
+  User.findById(req.body.auth_id)
 });
 
 app.post('/connect', function(req, res) {
@@ -88,7 +88,7 @@ app.post('/connect', function(req, res) {
           'https://www.googleapis.com/auth/calendar'
         ],
         state: encodeURIComponent(JSON.stringify({
-          auth_id: user._id;
+          auth_id: user._id
         }))
       });
 
