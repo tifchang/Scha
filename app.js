@@ -1,13 +1,25 @@
-
-var bot = require('./bot.js');
-
-// write express server in bot.js  and require it in here
-// sends link to user --> when you click on it it will send a request to express
 var express = require('express');
 var bodyParser = require('body-parser');
+var mongoose = require('mongoose');
+var google = require('googleapis');
+var googleAuth = require('google-auth-library');
+
+var bot = require('./bot.js');
+var Models = require('./models/models');
+var User = Models.User;
+
 
 var app = express();
 var port = process.env.PORT || 3000;
+
+//mongodb
+if (!process.env.MONGODB_URI || !process.env.CLIENT_SECRET) {
+  console.log('ERROR: environmental variables missing, remember to source your env.sh file!');
+}
+
+mongoose.Promise = global.Promise;
+mongoose.connect(process.env.MONGODB_URI);
+mongoose.connection.on('error', console.error);
 
 // body parser middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -34,6 +46,49 @@ app.post('/hello', function (req, res, next) {
     res.send('Okay request has been submitted!');
   }
 
+});
+
+app.get('/connect/success', function(req, res) {
+
+});
+
+app.get('/connect/callback', function(req, res) {
+
+});
+
+app.post('/connect', function(req, res) {
+  //get slack_id
+  var slackId = req.body.user;
+
+  //get credentials
+  var credentials = JSON.parse(process.env.CLIENT_SECRET);
+  var clientSecret = credentials.web.client_secret;
+  var clientId = credentials.web.client_id;
+  var redirectUrl = credentials.web.redirect_uris[0] + '/connect/callback';
+
+  //set up auth
+  var auth = new googleAuth();
+  var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+
+  //add new user to MONGO_DB
+  var newUser = new User ({
+    slack_id: slackId,
+    token: null
+  });
+
+  var url = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/calendar'
+    ],
+    state: encodeURIComponent(JSON.stringify({
+      auth_id: req.query.auth_id
+    }))
+  });
+
+  res.redirect(url);
 });
 
 // app.post('/login', function (req, res, next) {
