@@ -24,8 +24,14 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
     messageInProgess = false;
   }
 
+  //ensure the bot will ignore the message if it is not sent via DM
+  var dm = rtm.dataStore.getDMByUserId(msg.user);
+  if (!dm || dm.id !== msg.channel || msg.type !== 'message') {
+    return;
+  }
+
   //check that the user has gone through authentication
-  User.findOne({slack_id: msg.user})
+  User.findOne({slackId: msg.user})
   .then(function(user) {
     if (!user) {
       return new User({
@@ -41,17 +47,12 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
         This is scheduler bot. In order to schedule things for you, I need
         access to your google calendar.
 
-        Please visit http://localhost:3000/connect?user=${user.slackId} to setup Google Calendar`, msg.channel);
+        Please visit http://d31adc8e.ngrok.io/connect?user=${user._id} to setup Google Calendar`, msg.channel);
         return;
-    }
-    //ensure the bot will ignore the message if it is not sent via DM
-    var dm = rtm.dataStore.getDMByUserId(msg.user);
-    if (!dm || dm.id !== msg.channel || msg.type !== 'message') {
-      return;
     }
 
     if (messageInProgess) {
-      rtm.sendMessage('Please complete previous request!', msg.channel);
+      rtm.sendMessage('Please complete previous request!', user.slackDmId);
       return;
     }
     axios.get('https://api.api.ai/api/query', {
@@ -69,10 +70,11 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
     .then((res) => {
       // check that action is complete
       if (res.data.result.actionIncomplete) {
-        rtm.sendMessage(res.data.result.fulfillment.speech, user.DmId)
+        rtm.sendMessage(res.data.result.fulfillment.speech, user.slackDmId)
         return;
       } else if (res.data.result.action === "remind.add") {
         user.pendingRequest = JSON.stringify(res.data.result);
+        console.log(user.pendingRequest);
         user.save()
         .then(function(user) {
           web.chat.postMessage(msg.channel, '', {

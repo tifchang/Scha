@@ -57,33 +57,45 @@ app.get('/connect/callback', function(req, res) {
   var code = req.query.code;
   var state = req.query.state;
 
-  var googleAuth = getGoogleAuth();
-  googleAuth.getToken(code, function(err, tokens) {
+  //get credentials
+  var credentials = JSON.parse(process.env.CLIENT_SECRET);
+  var clientSecret = credentials.web.client_secret;
+  var clientId = credentials.web.client_id;
+  var redirectUrl = credentials.web.redirect_uris[0] + '/connect/callback';
+
+  //set up auth
+  var auth = new googleAuth();
+  var googleAuthorization = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+
+  googleAuthorization.getToken(code, function(err, tokens) {
     if (err) {
       res.send('Error', err);
     } else {
-      googleAuth.setCredentials(tokens);
+      googleAuthorization.setCredentials(tokens);
       var plus = google.plus('v1');
-      plus.people.get({auth: googleAuth, userId: 'me'}, function(err, googleUser) {
-        User.findById(JSON.parse(state).auth_id)
+      plus.people.get({auth: googleAuthorization, userId: 'me'}, function(err, googleUser) {
+        console.log("state", JSON.parse(decodeURIComponent(req.query.state)));
+        User.findById(JSON.parse(decodeURIComponent(state)).auth_id)
         .then(function(mongoUser) {
           mongoUser.google = tokens;
-          mongoUser.google.profile_id = googleUser.Id
-          mongoUser.google.profile_name = googleUser.displayName
+          if (googleUser) {
+            mongoUser.google.profile_id = googleUser.Id
+            mongoUser.google.profile_name = googleUser.displayName
+          }
           return mongoUser.save();
         })
         .then(function(mongoUser) {
-          res.json(mongoUser);
-          //res.redirect('/connect/success');
+          // res.json(mongoUser);
+          res.redirect('/connect/success');
         })
       })
     }
   })
 });
 
-app.post('/connect', function(req, res) {
+app.get('/connect', function(req, res) {
   //get slack_id
-  var userId = req.body.userId;
+  var userId = req.query.user;
 
   //get credentials
   var credentials = JSON.parse(process.env.CLIENT_SECRET);
@@ -107,26 +119,10 @@ app.post('/connect', function(req, res) {
       auth_id: userId
     }))
   });
+  console.log(url);
 
-  newUser.save(function(err, user) {
-    if (err) {
-      res.json({failure: err});
-    } else {
-      var url = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        prompt: 'consent',
-        scope: [
-          'https://www.googleapis.com/auth/userinfo.profile',
-          'https://www.googleapis.com/auth/calendar'
-        ],
-        state: encodeURIComponent(JSON.stringify({
-          auth_id: user._id
-        }))
-      });
+  res.redirect(url);
 
-      res.redirect(url);
-    }
-  })
 });
 
 app.listen(port, function () {
