@@ -18,7 +18,7 @@ if (!process.env.MONGODB_URI || !process.env.CLIENT_SECRET) {
 
 mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGODB_URI);
-mongoose.connection.on('error', console.error);
+mongoose.connection.on('mongoose error', console.error);
 
 var bot = require('./bot.js');
 
@@ -49,26 +49,41 @@ app.post('/message', function (req, res, next) {
 });
 
 app.get('/connect/success', function(req, res) {
-
+  res.send('Connect success')
 });
 
-app.get('/connect', function(req, res) {
-  if (!req.query.user) {
-    res.status(400).send('error');
-  }
-  User.findById(req.query.user)
-  .then(function(user) {
-
-  })
-});
 
 app.get('/connect/callback', function(req, res) {
-  User.findById(req.query.user)
+  var code = req.query.code;
+  var state = req.query.state;
+
+  var googleAuth = getGoogleAuth();
+  googleAuth.getToken(code, function(err, tokens) {
+    if (err) {
+      res.send('Error', err);
+    } else {
+      googleAuth.setCredentials(tokens);
+      var plus = google.plus('v1');
+      plus.people.get({auth: googleAuth, userId: 'me'}, function(err, googleUser) {
+        User.findById(JSON.parse(state).auth_id)
+        .then(function(mongoUser) {
+          mongoUser.google = tokens;
+          mongoUser.google.profile_id = googleUser.Id
+          mongoUser.google.profile_name = googleUser.displayName
+          return mongoUser.save();
+        })
+        .then(function(mongoUser) {
+          res.json(mongoUser);
+          //res.redirect('/connect/success');
+        })
+      })
+    }
+  })
 });
 
 app.post('/connect', function(req, res) {
   //get slack_id
-  var slackId = req.body.user;
+  var userId = req.body.userId;
 
   //get credentials
   var credentials = JSON.parse(process.env.CLIENT_SECRET);
@@ -80,11 +95,17 @@ app.post('/connect', function(req, res) {
   var auth = new googleAuth();
   var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
-  //add new user to MONGO_DB
-  var newUser = new User ({
-    slackId: slackId,
-    slackDmId: '',
-    google: {}
+  //create url
+  var url = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/calendar'
+    ],
+    state: encodeURIComponent(JSON.stringify({
+      auth_id: userId
+    }))
   });
 
   newUser.save(function(err, user) {
@@ -107,19 +128,6 @@ app.post('/connect', function(req, res) {
     }
   })
 });
-
-// app.post('/login', function (req, res, next) {
-//   var userName = req.body.user_name;
-//   var botPayload = {
-//     text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
-//   };
-//   // Loop otherwise..
-//   if (userName !== 'slackbot') {
-//     return res.status(200).json(botPayload);
-//   } else {
-//     return res.status(200).end();
-//   }
-// });
 
 app.listen(port, function () {
   console.log('Listening on port ' + port);
