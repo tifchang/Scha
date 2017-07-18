@@ -14,9 +14,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@slack/client": "^3.10.0",
     "body-parser": "^1.x.x",
     "express": "^4.x.x",
+    "google-auth-library": "^0.10.0",
+    "googleapis": "^20.1.0",
     "request": "2.56.x"
   },
   "bugs": {
