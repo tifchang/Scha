@@ -14,8 +14,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.x.x",
+    "axios": "^0.16.2",
     "body-parser": "^1.x.x",
+    "express": "^4.x.x",
+    "google-auth-library": "^0.10.0",
+    "googleapis": "^20.1.0",
+    "mongoose": "^4.11.3",
     "request": "2.56.x"
   },
   "bugs": {
