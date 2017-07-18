@@ -57,3 +57,6 @@ typings/
 # dotenv environment variables file
 .env
 
+# google calendar API info
+client_secret.json
+
