@@ -73,8 +73,8 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
         rtm.sendMessage(res.data.result.fulfillment.speech, user.slackDmId)
         return;
       } else if (res.data.result.action === "remind.add") {
-        user.pendingRequest = JSON.stringify(res.data.result);
-        console.log(user.pendingRequest);
+        user.pendingRequest = JSON.stringify(Object.assign({}, (res.data.result).parameters, {action: 'remind.add'}));
+        console.log("RESULT", user.pendingRequest);
         user.save()
         .then(function(user) {
           web.chat.postMessage(msg.channel, '', {

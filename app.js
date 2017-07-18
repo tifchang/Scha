@@ -74,7 +74,6 @@ app.get('/connect/callback', function(req, res) {
       googleAuthorization.setCredentials(tokens);
       var plus = google.plus('v1');
       plus.people.get({auth: googleAuthorization, userId: 'me'}, function(err, googleUser) {
-        console.log("state", JSON.parse(decodeURIComponent(req.query.state)));
         User.findById(JSON.parse(decodeURIComponent(state)).auth_id)
         .then(function(mongoUser) {
           mongoUser.google = tokens;
@@ -119,7 +118,6 @@ app.get('/connect', function(req, res) {
       auth_id: userId
     }))
   });
-  console.log(url);
 
   res.redirect(url);
 
