@@ -58,6 +58,7 @@ function remindOneDayBefore() {
     tomorrowString = tomorrow.toISOString().substring(0, 10);
 
     tasks.forEach(function(task) {
+        console.log(task)
       //task.day can just be new Date();
       if (task.day.toISOString().substring(0,10) === tomorrowString) {
         rtm.sendMessage(`Hi ${task.requesterId.google.profile_name}!
@@ -74,7 +75,6 @@ rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
 });
 
 rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, (rtmStartData) => {
-  console.log("hello");
   remindToday();
   remindOneDayBefore();
 });
