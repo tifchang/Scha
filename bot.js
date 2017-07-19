@@ -76,7 +76,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
                     user.pendingRequest = JSON.stringify(res.data.result);
                     console.log(user.pendingRequest);
                     user.save()
-                    .then(function(user) {    
+                    .then(function(user) {
                         web.chat.postMessage(msg.channel, '', {
                             "attachments": [
                                 {
