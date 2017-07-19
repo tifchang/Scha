@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
+
 var OAuth2 = google.auth.OAuth2;
 
 var Models = require('./models/models');
@@ -50,7 +51,7 @@ app.post('/message', function (req, res, next) {
     }
 });
 
-
+// GOOGLEAUTH HELPER FUNCTION
 function getGoogleAuth() {
     var credentials = JSON.parse(process.env.CLIENT_SECRET);
     var clientSecret = credentials.web.client_secret;
@@ -63,16 +64,16 @@ function getGoogleAuth() {
         redirectUrl
     );
 }
-
+//ADDING DAY HELPER FUNCTION
 function addDay(date) {
     var result = new Date(date);
     result.setDate(result.getDate() + 1);
     return result.toISOString().substring(0, 10);
 }
-
+//ACTUAL ADDING TO GOOGLE
 function addToGoogle(slackId) {
     //set up auth
-    var auth = new googleAuth();
+    // var auth = new googleAuth();
     var googleAuthorization = getGoogleAuth();
 
     User.findOne({slackId: slackId})
@@ -80,11 +81,18 @@ function addToGoogle(slackId) {
         //if token expired, get a new token and save it
         if (parseInt(user.google.expiry_date) < Date.now()) {
             //use refresh token --> get request
+            googleAuthorization.setCredentials({
+              access_token: user.google.id_token,
+              refresh_token: user.google.refresh_token
+            });
+
             googleAuthorization.refreshAccessToken(function(err, tokens) {
                 User.findOne({slackId: slackId}, (err, user) => {
                     if (err) {
                         res.json({failure: err})
                     } else {
+                        console.log('LE TOKENS', tokens);
+                        console.log('LE USER.GOOGLE', user.google);
                         user.google = tokens;
                         user.save();
                     }
@@ -92,6 +100,7 @@ function addToGoogle(slackId) {
             });
         }
         var pending = JSON.parse(user.pending);
+        // Checks action type
         if (pending.action === "remind.add") {
             var task = pending.any;
             var date = pending.date;
