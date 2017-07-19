@@ -34,21 +34,10 @@ app.get('/hello', function (req, res) {
   res.send('Hello world!');
 });
 
-<<<<<<< HEAD
-app.get('/login', function (req, res, next) {
-  var userName = req.body.user_name;
-  var botPayload = {
-    text : 'Hello ' + userName.toUpperCase() + ', welcome to TestMyBotHorizons Slack channel! I\'ll be your guide bitches!'
-  };
-  // Loop otherwise..
-  if (userName !== 'slackbot') {
-    return res.status(200).json(botPayload);
-=======
 app.post('/message', function (req, res, next) {
   var slackId = JSON.parse(req.body.payload).callback_id;
   if (JSON.parse(req.body.payload).actions[0].value === 'bad') {
     res.send('Okay I canceled your request!');
->>>>>>> carokun
   } else {
     //call function to add the reminder to google calendar
     console.log(addToGoogle(slackId));
