@@ -49,3 +49,6 @@ function remindToday() {
     })
   })
 }
+
+remindOneDayBefore();
+remindToday();
