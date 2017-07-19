@@ -127,6 +127,52 @@ function addToGoogle(slackId) {
                   return(event);
                 })
             });
+        } else if (pending.action === "meeting.add") {
+            var task = pending.any;
+            var date = pending.date;
+            var time = pending.time;
+            var hours = time.substring(0, 2);
+            var minutes = time.substring(3, 5);
+            var seconds = time.substring(6, 8);
+            var milsecs = time.substring(9, 10);
+            var year = date.substring(0, 4);
+            var month = date.substring(5, 7);
+            var day = date.substring(8, 10);
+
+            var start = new Date(year, month, day, hours, minutes, seconds, milsecs)
+
+            var end = new Date(start.getTime() + 30 * 60 * 1000)
+
+            var Date =
+            new Task({
+              subject: task,
+              day: new Date(date),
+              requesterId: user._id
+            }).save()
+            var event = {
+                'summary': task,
+                'start': {
+                    'date': start,
+                },
+                'end': {
+                    'date': end
+                },
+            };
+            calendar.events.insert({
+                auth: googleAuthorization,
+                calendarId: 'primary',
+                resource: event,
+            }, function(err, event) {
+                if (err) {
+                    console.log('There was an error contacting the Calendar service: ' + err);
+                    return err;
+                }
+                console.log('Event created: %s', event.htmlLink);
+                user.pendingRequest = '';
+                user.save(function(user) {
+                  return(event);
+                })
+            });
         }
     })
     .catch(function(err) {
