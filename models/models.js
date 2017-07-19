@@ -47,7 +47,7 @@ var MeetingSchema = new Schema({
     required: true
   },
   invitees:{
-    type: Object,
+    type: Array,
     required: true
   },
   googleCal: {},
@@ -58,6 +58,10 @@ var MeetingSchema = new Schema({
     type: Date
   },
   requesterId: {
+    type: Schema.ObjectId,
+    ref: 'User'
+  },
+  subject: {
     type: String
   }
 });
