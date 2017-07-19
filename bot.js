@@ -60,8 +60,6 @@ function remindToday() {
 
 rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   console.log(rtmStartData.self.name);
-  remindToday();
-  remindOneDayBefore();
 })
 
 // let messageInProgess = false;
@@ -92,7 +90,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
         This is scheduler bot. In order to schedule things for you, I need
         access to your google calendar.
 
-        Please visit http://d31adc8e.ngrok.io/connect?user=${user._id} to setup Google Calendar`, msg.channel);
+        Please visit http://a2c5ad38.ngrok.io/connect?user=${user._id} to setup Google Calendar`, msg.channel);
         return;
     }
 

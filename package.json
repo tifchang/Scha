@@ -18,10 +18,11 @@
     "axios": "^0.16.2",
     "body-parser": "^1.x.x",
     "express": "^4.x.x",
-    "nodemon": "^1.11.0",
     "google-auth-library": "^0.10.0",
     "googleapis": "^20.1.0",
     "mongoose": "^4.11.3",
+    "ngrok-cli": "^1.0.3",
+    "nodemon": "^1.11.0",
     "request": "2.56.x"
   },
   "bugs": {
