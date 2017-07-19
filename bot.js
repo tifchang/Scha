@@ -151,7 +151,10 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
     .catch((err) => {
       console.log(err);
     })
+<<<<<<< HEAD
 
+=======
+>>>>>>> ff795ce71bb7e37127ba2a4e4bf1b130ce817664
   })
 })
 

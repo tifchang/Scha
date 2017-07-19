@@ -21,6 +21,7 @@ function availabilityHelper(daysArray) {
       currentPosition += counter;
       counter = 1;
       condensedTimes.push(sortedDay[])
+      }
     }
   })
 }

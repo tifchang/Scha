@@ -1,6 +1,30 @@
 
 
+<<<<<<< HEAD
+// MONGODB USER STORAGE
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+
+mongoose.Promise = global.Promise;
+mongoose.connect(process.env.MONGODB_URI);
+mongoose.connection.on('error', console.error);
+
+var UserSchema = new Schema ({
+  token: Object
+})
+
+var User = mongoose.model('User', UserSchema)
+
+// GOOGLE CALENDAR AUTH
+// If modifying these scopes, delete your previously saved credentials
+// at ~/.credentials/calendar-nodejs-quickstart.json
+=======
+>>>>>>> carokun
 var SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
+
+function checkIfUserExists() {
+  User.findById()
+}
 
 function authorizeClient() {
   // Load client secrets from a local file.
@@ -51,7 +75,7 @@ function authorizeClient() {
 
 
 function endpointRetrieveToken(oauth2Client, callback) {
-  
+
   oauth2Client.getToken(code, function(err, token) {
     if (err) {
       console.log('Error while trying to retrieve access token', err);
@@ -131,6 +155,3 @@ function listEvents(auth) {
     }
   });
 }
-
-
-
