@@ -31,7 +31,8 @@ var TaskSchema = new Schema ({
     type: String
   },
   requesterId: {
-    type: String
+    type: Schema.ObjectId,
+    ref: 'User'
   }
 });
 
