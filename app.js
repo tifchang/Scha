@@ -93,9 +93,11 @@ function addToGoogle(slackId) {
                         res.json({failure: err})
                         return;
                     } else {
-                        console.log('LE TOKENS', tokens);
-                        console.log('LE USER.GOOGLE', user.google);
-                        user.google = tokens;
+                      // NEEEWWWW HOW TO SAVE REFRESH TOKENS!!!
+                        user.google.expiry_date = tokens.expiry_date;
+                        user.google.id_token = tokens.id_token;
+                        user.google.refresh_token = tokens.refresh_token;
+                        user.google.token_type = tokens.token_type;
                         user.save();
                     }
                 })
@@ -136,10 +138,12 @@ function addToGoogle(slackId) {
                 })
             });
         } else if (pending.action === "meeting.add") {
+          // CHECK TO SEE IF THE USER HAS ANYTHING FIRST
             var task = pending.subject;
             var date = pending.date;
             var time = pending.time;
             var invitees = pending['given-name'];
+
             var hours = time.substring(0, 2);
             var minutes = time.substring(3, 5);
             var seconds = time.substring(6, 8);
@@ -152,8 +156,21 @@ function addToGoogle(slackId) {
             var start = new Date(year, month, day, hours, minutes, seconds, milsecs)
             var end = new Date(start.getTime() + 30 * 60 * 1000)
 
-            console.log(start.toISOString());
-            console.log(end.toISOString());
+          // CHECK TO SEE IF THE USER HAS ANYTHING FIRST
+          // 1. Go get user's calendar events from PRIMARY using start & end time
+          calendar.events.list({
+            auth: googleAuthorization,
+            calendarId: 'primary',
+            timeMin: start.toISOString(),
+            timeMax: end.toISOString(),
+            timeZone: "America/Los_Angeles",
+            alwaysIncludeEmail: true,
+
+          })
+          .then((response) => {
+
+          })
+
 
             new Meeting({
               time: time,
