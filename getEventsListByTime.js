@@ -19,6 +19,7 @@ var end = new Date(start.getTime() + 30 * 60 * 1000)
 // THIS FUNCTION RETURNS AN ARRAY WITH CONFLICTS FOR THE REQUESTED TIME
 // params: start = requested start datetime of mtg req, end = requested end datetime of mtg req
 function getAttendeeConflicts(attendees, start, end) {
+  var calendar = google.calendar('v3');
   let conflictsArr = [];
   attendees.forEach((user) => {
     var gAuthUser = getGoogleAuth();
@@ -26,7 +27,7 @@ function getAttendeeConflicts(attendees, start, end) {
       access_token: user.google.id_token,
       refresh_token: user.google.refresh_token
     })
-    calendar.events.list({
+    gAuthUser.calendar.events.list({
       auth: gAuthUser,
       calendarId: 'primary',
       timeMin: start.toISOString(),
@@ -38,11 +39,10 @@ function getAttendeeConflicts(attendees, start, end) {
         console.log('ERROR IN RETRIEVING CONFLICTS': err);
       }
       if (response.items.length > 0) {
-        conflictsArr.push(response.items);
+        return false;
       }
     })
   })
-  return conflictsArr;
 }
 
 // THIS FUNCTION RETURNS AN ARRAY WITH NESTED ARRAYS INDEXED BY DAY
@@ -67,4 +67,41 @@ function getConflictsSevenDays(attendees) {
 
     })
   })
+}
+
+
+
+
+
+
+
+
+
+
+
+
+function getAttendeeConflicts(attendees, start, end) {
+  var calendar = google.calendar('v3');
+  let promisesArr = [];
+
+  var promisesArr = attendees.map((user) => {
+    var gAuthUser = getGoogleAuth();
+    gAuthUser.setCredentials({
+      access_token: user.google.id_token,
+      refresh_token: user.google.refresh_token
+    })
+    return gAuthUser.calendar.events.list({
+      auth: gAuthUser,
+      calendarId: 'primary',
+      timeMin: start.toISOString(),
+      timeMax: end.toISOString(),
+      timeZone: "America/Los_Angeles",
+      alwaysIncludeEmail: true,
+    }, function(err, response) {
+      if (err) {
+        console.log('ERROR IN RETRIEVING CONFLICTS': err);
+      }
+    })
+  })
+  return Promises.all(promisesArr)
 }

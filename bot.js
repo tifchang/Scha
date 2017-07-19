@@ -2,7 +2,7 @@ var axios = require('axios');
 
 var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 
-var bot_token = 'xoxb-213951919538-lLiMYYmzZj2wczUv42EpNDrM';
+var bot_token = 'xoxb-214569167297-MS1iiNvvMRhbbGCTjg1zqXzd';
 
 var rtm = new RtmClient(bot_token);
 
