@@ -7,6 +7,7 @@ var googleAuth = require('google-auth-library');
 var Models = require('./models/models');
 var User = Models.User;
 var Task = Models.Task;
+var Meeting = Models.Meeting;
 
 var OAuth2 = google.auth.OAuth2;
 
@@ -122,6 +123,61 @@ function addToGoogle(slackId) {
                 'end': {
                     'date': addDay(date),  //need to add 1
                 },
+            };
+            calendar.events.insert({
+                auth: googleAuthorization,
+                calendarId: 'primary',
+                resource: event,
+            }, function(err, event) {
+                if (err) {
+                    console.log('There was an error contacting the Calendar service: ' + err);
+                    return err;
+                }
+                console.log('Event created: %s', event.htmlLink);
+                user.pendingRequest = '';
+                user.save(function(user) {
+                  return(event);
+                })
+            });
+        } else if (pending.action === "meeting.add") {
+            var task = pending.subject;
+            var date = pending.date;
+            var time = pending.time;
+            var invitees = pending['given-name'];
+
+            var hours = time.substring(0, 2);
+            var minutes = time.substring(3, 5);
+            var seconds = time.substring(6, 8);
+            var milsecs = time.substring(9, 10);
+            var year = date.substring(0, 4);
+            var parsedMonth = parseInt(date.substring(5, 7));
+            var month = parseInt(parsedMonth - 1).toString()
+            var day = date.substring(8, 10);
+
+            var start = new Date(year, month, day, hours, minutes, seconds, milsecs)
+            var end = new Date(start.getTime() + 30 * 60 * 1000)
+
+            console.log(start.toISOString());
+            console.log(end.toISOString());
+
+            new Meeting({
+              time: time,
+              invitees: invitees,
+              createdAt: new Date(),
+              requesterId: user._id,
+              subject: task,
+              day: date,
+              requesterId: user._id
+            }).save()
+            console.log(date);
+            var event = {
+                'summary': task,
+                'start': {
+                    'dateTime': start.toISOString()
+                },
+                'end': {
+                    'dateTime': end.toISOString()
+                }
             };
             calendar.events.insert({
                 auth: googleAuthorization,

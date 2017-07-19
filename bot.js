@@ -11,7 +11,7 @@ var web = new WebClient(bot_token);
 var Models = require('./models/models');
 var User = Models.User;
 var Task = Models.Task;
-
+var Meeting = Models.Meeting;
 
 function remindOneDayBefore() {
   Task.find({})
@@ -60,6 +60,8 @@ function remindToday() {
 
 rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   console.log(rtmStartData.self.name);
+  remindToday();
+  remindOneDayBefore();
 })
 
 // let messageInProgess = false;
@@ -98,6 +100,12 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
       rtm.sendMessage('Please complete previous request!', user.slackDmId);
       return;
     }
+    msg.text = msg.text.replace(/(<@)(\w+)(>)/g, function(a, b, userId) {
+      console.log('a', a);
+      console.log('b', b);
+      const name = rtm.dataStore.getUserById(userId).profile.first_name + ' ' + rtm.dataStore.getUserById(userId).profile.last_name
+      return name + ', ';
+    })
     axios.get('https://api.api.ai/api/query', {
       params: {
         v: 20150910,
@@ -154,6 +162,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
         console.log("RESULT", user.pendingRequest);
         user.save()
         .then(function(user) {
+
           web.chat.postMessage(msg.channel, '', {
             "attachments": [
               {
@@ -180,6 +189,8 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
             ]
           });
         })
+      } else {
+        rtm.sendMessage(res.data.result.fulfillment.speech, user.slackDmId)
       }
     })
     .catch((err) => {
