@@ -7,6 +7,7 @@ var googleAuth = require('google-auth-library');
 var Models = require('./models/models');
 var User = Models.User;
 var Task = Models.Task;
+var Meeting = Models.Meeting;
 
 var OAuth2 = google.auth.OAuth2;
 
@@ -99,6 +100,45 @@ function addToGoogle(slackId) {
             var task = pending.any;
             var date = pending.date;
             new Task({
+              subject: task,
+              day: new Date(date),
+              requesterId: user._id
+            }).save()
+            var event = {
+                'summary': task,
+                'start': {
+                    'date': date,
+                },
+                'end': {
+                    'date': addDay(date),  //need to add 1
+                },
+            };
+            calendar.events.insert({
+                auth: googleAuthorization,
+                calendarId: 'primary',
+                resource: event,
+            }, function(err, event) {
+                if (err) {
+                    console.log('There was an error contacting the Calendar service: ' + err);
+                    return err;
+                }
+                console.log('Event created: %s', event.htmlLink);
+                user.pendingRequest = '';
+                user.save(function(user) {
+                  return(event);
+                })
+            });
+        } else if (pending.action === "meeting.add") {
+            var subject = pending.subject;
+            var date = pending.date;
+            var time = pending.time;
+            var invitees = pending['given-name'];
+            new Meeting({
+              day: new Date(date),
+              time: time,
+              invitees: invitees,
+              createdAt: new Date(),
+              requesterId: user._id,
               subject: task,
               day: new Date(date),
               requesterId: user._id

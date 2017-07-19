@@ -11,7 +11,7 @@ var web = new WebClient(bot_token);
 var Models = require('./models/models');
 var User = Models.User;
 var Task = Models.Task;
-
+var Meeting = Models.Meeting;
 
 function remindOneDayBefore() {
   Task.find({})
@@ -111,6 +111,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
       }
     })
     .then((res) => {
+      console.log(res.data.result.action);
       // check that action is complete
       if (res.data.result.actionIncomplete) {
         rtm.sendMessage(res.data.result.fulfillment.speech, user.slackDmId)
@@ -180,6 +181,8 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
             ]
           });
         })
+      } else {
+        rtm.sendMessage(res.data.result.fulfillment.speech, user.slackDmId)
       }
     })
     .catch((err) => {
