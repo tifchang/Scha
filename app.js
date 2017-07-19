@@ -129,28 +129,43 @@ function addToGoogle(slackId) {
                 })
             });
         } else if (pending.action === "meeting.add") {
-            var subject = pending.subject;
+            var task = pending.subject;
             var date = pending.date;
             var time = pending.time;
             var invitees = pending['given-name'];
+            var hours = time.substring(0, 2);
+            var minutes = time.substring(3, 5);
+            var seconds = time.substring(6, 8);
+            var milsecs = time.substring(9, 10);
+            var year = date.substring(0, 4);
+            var parsedMonth = parseInt(date.substring(5, 7));
+            var month = parseInt(parsedMonth - 1).toString()
+            var day = date.substring(8, 10);
+
+            var start = new Date(year, month, day, hours, minutes, seconds, milsecs)
+            var end = new Date(start.getTime() + 30 * 60 * 1000)
+
+            console.log(start.toISOString());
+            console.log(end.toISOString());
+
             new Meeting({
-              day: new Date(date),
               time: time,
               invitees: invitees,
               createdAt: new Date(),
               requesterId: user._id,
               subject: task,
-              day: new Date(date),
+              day: date,
               requesterId: user._id
             }).save()
+            console.log(date);
             var event = {
                 'summary': task,
                 'start': {
-                    'date': date,
+                    'dateTime': start.toISOString()
                 },
                 'end': {
-                    'date': addDay(date),  //need to add 1
-                },
+                    'dateTime': end.toISOString()
+                }
             };
             calendar.events.insert({
                 auth: googleAuthorization,
