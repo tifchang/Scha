@@ -1,9 +1,6 @@
 
-var fs = require('fs');
-var readline = require('readline');
-var google = require('googleapis');
-var googleAuth = require('google-auth-library');
 
+<<<<<<< HEAD
 // MONGODB USER STORAGE
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
@@ -21,10 +18,9 @@ var User = mongoose.model('User', UserSchema)
 // GOOGLE CALENDAR AUTH
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/calendar-nodejs-quickstart.json
+=======
+>>>>>>> carokun
 var SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
-    process.env.USERPROFILE) + '/.credentials/';
-var TOKEN_PATH = TOKEN_DIR + 'calendar-nodejs-quickstart.json';
 
 function checkIfUserExists() {
   User.findById()
