@@ -14,8 +14,13 @@ function availabilityHelper(daysArray) {
         if (sortedDay[currentPosition].end.getTime() < sortedDay[currentPosition + counter].end.getTime()) {
           var itemToUpdate = condensedTimes.pop();
           itemToUpdate.end = sortedDay[currentPosition + counter].end
+          condensedTimes.push(itemToUpdate);
         }
+        counter++;
       }
+      currentPosition += counter;
+      counter = 1;
+      condensedTimes.push(sortedDay[])
     }
   })
 }
