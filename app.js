@@ -14,6 +14,9 @@ var OAuth2 = google.auth.OAuth2;
 var app = express();
 var port = process.env.PORT || 3000;
 
+//require helper functions
+var { getGoogleAuth, addDay, addToGoogle } = require('./googleCalendarHelpers');
+
 //mongodb
 if (!process.env.MONGODB_URI || !process.env.CLIENT_SECRET) {
   console.log('ERROR: environmental variables missing, remember to source your env.sh file!');
@@ -40,7 +43,7 @@ app.post('/message', function (req, res, next) {
     res.send('Okay I canceled your request!');
   } else {
     //call function to add the reminder to google calendar
-    console.log(addToGoogle(slackId));
+    addToGoogle(slackId);
     res.send('Okay request has been submitted!');
 
   }
@@ -48,6 +51,7 @@ app.post('/message', function (req, res, next) {
 });
 
 
+<<<<<<< HEAD
 function getGoogleAuth() {
     var credentials = JSON.parse(process.env.CLIENT_SECRET);
     var clientSecret = credentials.web.client_secret;
@@ -191,6 +195,8 @@ function addToGoogle(slackId) {
 }
 
 
+=======
+>>>>>>> 496b5970449132e6bba5d28efe36c69a4bbf3876
 
 app.get('/connect/success', function(req, res) {
     res.send('Connect success')
@@ -224,6 +230,7 @@ app.get('/connect/callback', function(req, res) {
           if (googleUser) {
             mongoUser.google.profile_id = googleUser.Id
             mongoUser.google.profile_name = googleUser.displayName
+            mongoUser.google.email = googleUser.emails[0].value;
           }
           return mongoUser.save();
         })
