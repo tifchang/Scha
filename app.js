@@ -51,7 +51,6 @@ app.post('/message', function (req, res, next) {
 });
 
 
-<<<<<<< HEAD
 function getGoogleAuth() {
     var credentials = JSON.parse(process.env.CLIENT_SECRET);
     var clientSecret = credentials.web.client_secret;
@@ -193,10 +192,6 @@ function addToGoogle(slackId) {
       console.log("ERRROR", err);
     })
 }
-
-
-=======
->>>>>>> 496b5970449132e6bba5d28efe36c69a4bbf3876
 
 app.get('/connect/success', function(req, res) {
     res.send('Connect success')
