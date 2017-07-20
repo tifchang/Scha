@@ -50,6 +50,7 @@ function getAttendeeConflicts(attendees, start, end) {
 // EX. [[{start: 'datetime', end: 'datetime'}, {start: 'datetime', end: 'datetime'}, ...], []]
 function getConflictsSevenDays(attendees) {
   let sevenDaysConflictsArr = [];
+<<<<<<< HEAD
   let today = new Date()
 
   for (var i = 0; i < 7; i++) {
@@ -57,6 +58,17 @@ function getConflictsSevenDays(attendees) {
     let newDate = new Date(newDay).toISOString()
 
   }
+=======
+  let today = new Date;
+
+  for (var i = 0; i < 7; i++) {
+    let newDay = today.setDate(today.getDate() + i);
+    let newDate = new Date(newDay).toISOString();
+
+  }
+
+
+>>>>>>> carokun
   attendees.forEach((user) => {
     var gAuthUser = getGoogleAuth();
     gAuthUser.setCredentials({
