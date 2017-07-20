@@ -2,7 +2,7 @@ var axios = require('axios');
 
 var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 
-var bot_token = 'xoxb-213951919538-KRIoEVWljTojdrAfOESAnA3a';
+var bot_token = 'xoxb-214569167297-MS1iiNvvMRhbbGCTjg1zqXzd';
 
 var rtm = new RtmClient(bot_token);
 
@@ -47,7 +47,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
         This is scheduler bot. In order to schedule things for you, I need
         access to your google calendar.
 
-        Please visit http://d31adc8e.ngrok.io/connect?user=${user._id} to setup Google Calendar`, msg.channel);
+        Please visit http://a2c5ad38.ngrok.io/connect?user=${user._id} to setup Google Calendar`, msg.channel);
         return;
     }
 
