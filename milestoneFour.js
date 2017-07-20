@@ -1,3 +1,9 @@
+var Models = require('./models/models');
+var User = Models.User;
+var Task = Models.Task;
+var Meeting = Models.Meeting;
+
+
 //param: param: must take in organizer's slackId
 // this function makes sure every person on the attendees list has an account
 function checkCalAccess(slackId) {
@@ -10,7 +16,7 @@ function checkCalAccess(slackId) {
     var fullUserArr = slackIdArr.map((id) => {
       let slackDmId;
       if (rtm.dataStore.getDMByUserId(id)) {
-        slackDmId = rtm.dataStore.getDMByU serId(id);
+        slackDmId = rtm.dataStore.getDMByUserId(id);
       } else {
         web.im.open(id, function(err, resp) {
           if (err) {
@@ -94,13 +100,15 @@ function checkCalAccess(slackId) {
     })
   }
 
-  function scheduleMeetingPartFour(slackId) {
+  var {scheduleMeeting} = require('./scheduleMeeting');
+
+  function scheduleMeetingMFour(slackId, pending, user, res, web, date, calendar, auth, googleAuthorization, rtm) {
     doAllHaveGoogle(slackId).then((bool) => {
       if (bool) {
         //great! so everyone has google accounts.
         //we are assuming that addToGoogle will handle confirmation messages or
         //the availability policy
-        addToGoogle(slackId);
+        scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAuthorization);
       } else {
         inFourHours(slackId).then((isInFourHours) => {
           if (inFourHours) {
@@ -123,14 +131,14 @@ function checkCalAccess(slackId) {
           }
         })
       }
-    }))
-
-    }
+    })
   }
 
 
 
-
+module.exports = {
+  scheduleMeetingMFour: scheduleMeetingMFour
+}
 
 
 

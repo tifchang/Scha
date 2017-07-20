@@ -139,8 +139,10 @@ function addDay(date) {
     return result.toISOString().substring(0, 10);
 }
 
+var {scheduleMeetingMFour} = require('./milestoneFour.js')
 
-function addToGoogle(slackId, res, web, date) {
+
+function addToGoogle(slackId, res, web, date, rtm) {
     //set up auth
     var auth = new googleAuth();
     var googleAuthorization = getGoogleAuth();
@@ -206,7 +208,7 @@ function addToGoogle(slackId, res, web, date) {
                 })
             });
         } else if (pending.action === "meeting.add") {
-          scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAuthorization);
+          scheduleMeetingMFour(user.slackId, pending, user, res, web, date, calendar, auth, googleAuthorization, rtm);
         }
     })
     .catch(function(err) {
