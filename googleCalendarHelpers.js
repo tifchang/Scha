@@ -156,7 +156,11 @@ function addToGoogle(slackId) {
                         res.json({failure: err})
                         return;
                     } else {
-                        user.google = tokens;
+                        user.google.id_token = tokens.id_token;
+                        user.google.refresh_token = tokens.refresh_token;
+                        user.google.expiry_date = tokens.expiry_date;
+                        user.google.token_type = tokens.token_type;
+                        user.google.access_token = tokens.access_token;
                         user.save();
                     }
                 })
