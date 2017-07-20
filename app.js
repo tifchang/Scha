@@ -11,6 +11,12 @@ var Meeting = Models.Meeting;
 
 var OAuth2 = google.auth.OAuth2;
 
+var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
+
+var rtm = new RtmClient(process.env.BOT_TOKEN);
+
+var web = new WebClient(process.env.BOT_TOKEN);
+
 var app = express();
 var port = process.env.PORT || 3000;
 
@@ -41,11 +47,14 @@ app.post('/message', function (req, res, next) {
   var slackId = JSON.parse(req.body.payload).callback_id;
   if (JSON.parse(req.body.payload).actions[0].value === 'bad') {
     res.send('Okay I canceled your request!');
+  } else if (JSON.parse(req.body.payload).actions[0].value === 'good') {
+    addToGoogle(slackId, res, web);
+
   } else {
     //call function to add the reminder to google calendar
-    addToGoogle(slackId);
-    res.send('Okay request has been submitted!');
-
+    var date = JSON.parse(req.body.payload).actions[0].value;
+    console.log('appdate', date.substring(0, 10));
+    addToGoogle(slackId, res, web, date);
   }
 
 });

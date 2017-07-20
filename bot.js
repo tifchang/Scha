@@ -2,11 +2,9 @@ var axios = require('axios');
 
 var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 
-var bot_token = 'xoxb-213951919538-bJriEM0KyuH5n8DTzVXelHVO';
+var rtm = new RtmClient(process.env.BOT_TOKEN);
 
-var rtm = new RtmClient(bot_token);
-
-var web = new WebClient(bot_token);
+var web = new WebClient(process.env.BOT_TOKEN);
 
 var Models = require('./models/models');
 var User = Models.User;
@@ -15,7 +13,6 @@ var Meeting = Models.Meeting;
 
 rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   console.log(rtmStartData.self.name);
-
 })
 
 var toStore = {};
@@ -111,6 +108,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
         })
       } else if (res.data.result.action === "meeting.add") {
         user.pendingRequest = JSON.stringify(Object.assign({}, (res.data.result).parameters, {action: 'meeting.add', conversions: toStore}));
+        console.log(user.pendingRequest);
         user.save()
         .then(function(user) {
           let speech = res.data.result.fulfillment.speech;
