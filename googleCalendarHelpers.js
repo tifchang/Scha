@@ -11,27 +11,42 @@ var Meeting = Models.Meeting;
 
 var OAuth2 = google.auth.OAuth2;
 
+
+
 function getConflictsSevenDays(startDate, attendees) {
-  var calendar = google.calendar('v3');
     var arr = [];
     var today = new Date(startDate);
-    for (var i = 0; i < 7; i++) {
+    for (var i = 0; i < 9; i++) {
         var curDay = new Date(today);
         curDay.setDate(today.getDate() + i);
         if (curDay.getDay() === 0 || curDay.getDay() === 6) {
             continue;
         }
-        var dayArr = []; //of index i
+        getDailyPromise(attendees, curDay).then((dayConflicts) => {
+            arr.push(dayConflicts)
+            console.log('these are my days conflicts' , dayConflicts);
+            if (arr.length === 6) {
+              console.log('YOOO I RETURNED MY ARRAYYY ', arr, arr.length);
+                return arr
+            }
+        });
+    }
+}
 
-        attendees.forEach(user => {
-            var busy = {}; //event object
-            var gAuthUser = getGoogleAuth();
-            gAuthUser.setCredentials({
-                access_token: user.google.id_token,
-                refresh_token: user.google.refresh_token
-            });
-            var start = curDay.toISOString().substring(0,11) + "00:00:00z";
-            var end = curDay.toISOString().substring(0,11) + "23:59:59z";
+// WHAT YOU GET IN RETURN IS AN ARRAY WITH OBJECTS WITH START/END TIME CONFLICTS
+function getDailyPromise(attendees, curDay) {
+    var calendar = google.calendar('v3');
+    var dayPromise = attendees.map(user => {
+        var busy = {}; //event object
+        var gAuthUser = getGoogleAuth();
+        gAuthUser.setCredentials({
+            access_token: user.google.id_token,
+            refresh_token: user.google.refresh_token
+        });
+        var start = curDay.toISOString().substring(0,11) + "00:00:00z";
+        var end = curDay.toISOString().substring(0,11) + "23:59:59z";
+
+        return new Promise(function(res, rej) {
             calendar.events.list({
                 auth: gAuthUser,
                 calendarId: 'primary',
@@ -39,25 +54,26 @@ function getConflictsSevenDays(startDate, attendees) {
                 timeMax: end,
                 timeZone: "America/Los_Angeles",
                 alwaysIncludeEmail: true,
-            }, function(err, resp) {
+            }, function(err, result) {
                 if (err) {
-                    console.log(err);
+                    rej(err);
+                    return;
                 } else {
-                    var events = resp.items; //arr
-                    events.map(event => {
-                        busy.startTime = event.start.dateTime;
-                        busy.endTime = event.end.dateTime;
-                        dayArr.push(busy);
-                    })
+                    var events = result.items; //arr
+                    console.log('MAH EVENTS BITCHES', events);
+                    var e = events.map(event => {
+                      return {
+                        startTime: event.start.dateTime,
+                        endTime: event.end.dateTime
+                      }
+                    });
+                    console.log('EEEEEE', e);
+                    res(e);
                 }
             })
         })
-        arr.push(dayArr);
-        if ( i === 6) {
-            return arr;
-        }
-    }
-    return arr;
+    })
+    return Promise.all(dayPromise)
 }
 
 function getAttendeeConflicts(attendees, start, end) {
@@ -251,7 +267,7 @@ function addToGoogle(slackId) {
                 }
               })
               mongoInformation.push(user);
-              console.log(getConflictsSevenDays(start.toISOString(), mongoInformation));
+              console.log(getConflictsSevenDays(start, mongoInformation));
               getAttendeeConflicts(mongoInformation, start, end)
               .then((conflicts) => {
                 if (conflicts.length > 0) {

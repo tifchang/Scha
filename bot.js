@@ -2,7 +2,7 @@ var axios = require('axios');
 
 var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 
-var bot_token = 'xoxb-213951919538-lLiMYYmzZj2wczUv42EpNDrM';
+var bot_token = 'xoxb-213951919538-bJriEM0KyuH5n8DTzVXelHVO';
 
 var rtm = new RtmClient(bot_token);
 
@@ -151,7 +151,6 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
     .catch((err) => {
       console.log(err);
     })
-
   })
 })
 
