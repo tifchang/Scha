@@ -72,16 +72,16 @@ function getGoogleAuth() {
         redirectUrl
     );
 }
-
+//ADDING DAY HELPER FUNCTION
 function addDay(date) {
     var result = new Date(date);
     result.setDate(result.getDate() + 1);
     return result.toISOString().substring(0, 10);
 }
-
+//ACTUAL ADDING TO GOOGLE
 function addToGoogle(slackId) {
     //set up auth
-    var auth = new googleAuth();
+    // var auth = new googleAuth();
     var googleAuthorization = getGoogleAuth();
     var calendar = google.calendar('v3');
 
@@ -94,13 +94,22 @@ function addToGoogle(slackId) {
         });
         if (parseInt(user.google.expiry_date) < Date.now()) {
             //use refresh token --> get request
+            googleAuthorization.setCredentials({
+              access_token: user.google.id_token,
+              refresh_token: user.google.refresh_token
+            });
+
             googleAuthorization.refreshAccessToken(function(err, tokens) {
                 User.findOne({slackId: slackId}, (err, user) => {
                     if (err) {
                         res.json({failure: err})
                         return;
                     } else {
-                        user.google = tokens;
+                        // NEEEWWWW HOW TO SAVE REFRESH TOKENS!!!
+                        user.google.expiry_date = tokens.expiry_date;
+                        user.google.id_token = tokens.id_token;
+                        user.google.refresh_token = tokens.refresh_token;
+                        user.google.token_type = tokens.token_type;
                         user.save();
                     }
                 })
@@ -141,6 +150,7 @@ function addToGoogle(slackId) {
                 })
             });
         } else if (pending.action === "meeting.add") {
+          // CHECK TO SEE IF THE USER HAS ANYTHING FIRST
             var task = pending.subject;
             var date = pending.date;
             var time = pending.time;
@@ -158,8 +168,21 @@ function addToGoogle(slackId) {
             var start = new Date(year, month, day, hours, minutes, seconds, milsecs)
             var end = new Date(start.getTime() + 30 * 60 * 1000)
 
-            console.log(start.toISOString());
-            console.log(end.toISOString());
+          // CHECK TO SEE IF THE USER HAS ANYTHING FIRST
+          // 1. Go get user's calendar events from PRIMARY using start & end time
+          calendar.events.list({
+            auth: googleAuthorization,
+            calendarId: 'primary',
+            timeMin: start.toISOString(),
+            timeMax: end.toISOString(),
+            timeZone: "America/Los_Angeles",
+            alwaysIncludeEmail: true,
+
+          })
+          .then((response) => {
+
+          })
+
 
             new Meeting({
               time: time,

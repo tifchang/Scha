@@ -38,11 +38,17 @@ function availabilityHelper(daysArray) {
         }
         counter++;
       }
+<<<<<<< HEAD
       // freeTimes.push({start: sortedDay[currentPosition].end, end: sortedDay[currentPosition + counter].start})
       currentPosition += counter;
       counter = 1;
       if (sortedDay[currentPosition]) {
         condensedTimes.push(sortedDay[currentPosition])
+=======
+      currentPosition += counter;
+      counter = 1;
+      condensedTimes.push(sortedDay[])
+>>>>>>> 0361a6c8531a93d306b3c3de80e0e6c3b1116c28
       }
 
     }
