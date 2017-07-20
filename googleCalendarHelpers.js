@@ -11,6 +11,127 @@ var Meeting = Models.Meeting;
 
 var OAuth2 = google.auth.OAuth2;
 
+
+
+function getConflictsSevenDays(startDate, attendees) {
+    var arr = [];
+    var today = new Date(startDate);
+    for (var i = 0; i < 9; i++) {
+        var curDay = new Date(today);
+        curDay.setDate(today.getDate() + i);
+        if (curDay.getDay() === 0 || curDay.getDay() === 6) {
+            continue;
+        }
+        getDailyPromise(attendees, curDay).then((dayConflicts) => {
+            arr.push(dayConflicts)
+            console.log('these are my days conflicts' , dayConflicts);
+            if (arr.length === 6) {
+              console.log('YOOO I RETURNED MY ARRAYYY ', arr, arr.length);
+                return arr
+            }
+        });
+    }
+}
+
+// WHAT YOU GET IN RETURN IS AN ARRAY WITH OBJECTS WITH START/END TIME CONFLICTS
+function getDailyPromise(attendees, curDay) {
+    var calendar = google.calendar('v3');
+    var dayPromise = attendees.map(user => {
+        var busy = {}; //event object
+        var gAuthUser = getGoogleAuth();
+        gAuthUser.setCredentials({
+            access_token: user.google.id_token,
+            refresh_token: user.google.refresh_token
+        });
+        var start = curDay.toISOString().substring(0,11) + "00:00:00z";
+        var end = curDay.toISOString().substring(0,11) + "23:59:59z";
+
+        return new Promise(function(res, rej) {
+            calendar.events.list({
+                auth: gAuthUser,
+                calendarId: 'primary',
+                timeMin: start,
+                timeMax: end,
+                timeZone: "America/Los_Angeles",
+                alwaysIncludeEmail: true,
+            }, function(err, result) {
+                if (err) {
+                    rej(err);
+                    return;
+                } else {
+                    var events = result.items; //arr
+                    console.log('MAH EVENTS BITCHES', events);
+                    var e = events.map(event => {
+                      return {
+                        startTime: event.start.dateTime,
+                        endTime: event.end.dateTime
+                      }
+                    });
+                    console.log('EEEEEE', e);
+                    res(e);
+                }
+            })
+        })
+    })
+    return Promise.all(dayPromise)
+}
+
+function getAttendeeConflicts(attendees, start, end) {
+  var calendar = google.calendar('v3');
+
+  var promisesArr = attendees.map((user) => {
+    var gAuthUser = getGoogleAuth();
+    gAuthUser.setCredentials({
+      access_token: user.google.id_token,
+      refresh_token: user.google.refresh_token
+    })
+    return new Promise(function(resolve, reject) {
+      calendar.events.list({
+        auth: gAuthUser,
+        calendarId: 'primary',
+        timeMin: start.toISOString(),
+        timeMax: end.toISOString(),
+        timeZone: "America/Los_Angeles",
+        alwaysIncludeEmail: true,
+      }, function(err, result) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(result);
+        // console.log("XXX", x);
+      });
+    });
+  })
+  return Promise.all(promisesArr);
+}
+
+// function getAttendeeConflicts(attendees, start, end) {
+//   var calendar = google.calendar('v3');
+//
+//   var promisesArr = attendees.map((user) => {
+//     var gAuthUser = getGoogleAuth();
+//     gAuthUser.setCredentials({
+//       access_token: user.google.id_token,
+//       refresh_token: user.google.refresh_token
+//     })
+//     return gAuthUser.calendar.events.list({
+//       auth: gAuthUser,
+//       calendarId: 'primary',
+//       timeMin: start.toISOString(),
+//       timeMax: end.toISOString(),
+//       timeZone: "America/Los_Angeles",
+//       alwaysIncludeEmail: true,
+//     },
+//     function(err, response) {
+//       if (err) {
+//         console.log('ERROR IN RETRIEVING CONFLICTS', err);
+//       }
+//     })
+//   })
+//   return Promises.all(promisesArr)
+// }
+
 function getGoogleAuth() {
     var credentials = JSON.parse(process.env.CLIENT_SECRET);
     var clientSecret = credentials.web.client_secret;
@@ -136,41 +257,51 @@ function addToGoogle(slackId) {
 
               //array with all of the invitees mongo information to check availability with
               var mongoInformation = [];
-              users.map(function(user) {
-                var mongoSlackId = user.slackId;
+              users.map(function(userData) {
+                var mongoSlackId = userData.slackId;
                 for (var name in conversions) {
                   if (conversions[name] === mongoSlackId) {
-                    console.log(name);
-                    userArr.push({displayName: name, email: user.google.email})
-                    mongoInformation.push(user);
+                    userArr.push({displayName: name, email: userData.google.email})
+                    mongoInformation.push(userData);
                   }
                 }
               })
-              var event = {
+              mongoInformation.push(user);
+              console.log(getConflictsSevenDays(start, mongoInformation));
+              getAttendeeConflicts(mongoInformation, start, end)
+              .then((conflicts) => {
+                if (conflicts.length > 0) {
+                  console.log('there is a conflict');
+                }
+
+                var event = {
                   'summary': task,
                   'start': {
-                      'dateTime': start.toISOString()
+                    'dateTime': start.toISOString()
                   },
                   'end': {
-                      'dateTime': end.toISOString()
+                    'dateTime': end.toISOString()
                   },
                   'attendees': userArr
-              };
-              calendar.events.insert({
+                };
+                console.log(userArr);
+                calendar.events.insert({
                   auth: googleAuthorization,
                   calendarId: 'primary',
                   resource: event,
-              }, function(err, event) {
+                }, function(err, event) {
                   if (err) {
-                      console.log('There was an error contacting the Calendar service: ' + err);
-                      return err;
+                    console.log('There was an error contacting the Calendar service: ' + err);
+                    return err;
                   }
                   console.log('Event created: %s', event.htmlLink);
                   user.pendingRequest = '';
                   user.save(function(user) {
                     return(event);
                   })
+                });
               });
+
             })
             .catch(function(err) {
               console.log('Error on line 206', err);

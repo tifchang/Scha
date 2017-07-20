@@ -47,7 +47,3 @@ function getAttendeeConflicts(attendees, start, end) {
     })
   })
 }
-
-function getConflictsSevenDays(attendees) {
-
-}
