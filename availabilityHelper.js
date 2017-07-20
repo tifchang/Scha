@@ -45,19 +45,42 @@ function availabilityHelper(daysArray) {
   return condensedWeek;
 }
 
-function findFreeTimes(condensedWeek) {
+function findFreeTimes(daysArray) {
+  var weekFreeTimes = [];
+  var condensedWeek = availabilityHelper(daysArray);
   var firstConflict = condensedWeek[0][0].start;
-  var myNewDate = new Date(firstConflict).setDate(firstConflict - )
-  condensedWeek.map(function(condensedDay) {
-    condensedDay = condensedDay.map(function(timeObj) {
-      return {start: 60 * timeObj.start.hours() + timeObj.start.minutes(), end: 60 * timeObj.end.hours() + timeObj.end.minutes()};
+  var startDate = new Date(new Date(new Date(firstConflict).setMinutes(0)).setHours(2))
+  var endDate = new Date(new Date(new Date(firstConflict).setMinutes(0)).setHours(10))
+  console.log(startDate);
+  console.log(endDate);
+  // var secondDay = new Date(startDate.setDate(startDate.getDate() + 1))
+  condensedWeek.map(function(condensedDay, index) {
+    var todaysFreeTimes = [];
+    var freeStartTime = new Date(startDate.setDate(startDate.getDate() + index));
+    var freeEndTime = new Date(endDate.setDate(endDate.getDate() + index));
+    console.log(freeStartTime);
+    console.log(freeEndTime);
+    condensedDay.push({
+      start: freeEndTime,
+      end: freeEndTime
     })
-    var dayStart = 540;
-    var dayEnd = 1020;
+    condensedDay.map(function(busyBlockObj, timeBlockIndex) {
+      while (busyBlockObj.start.getTime() - freeStartTime.getTime() >= 30 * 60000) {
+        todaysFreeTimes.push({
+          start: freeStartTime,
+          end: new Date(new Date(freeStartTime).setMinutes(new Date(freeStartTime).getMinutes() + 30))
+        })
+        freeStartTime = new Date(new Date(freeStartTime).setMinutes(new Date(freeStartTime).getMinutes() + 30));
+      }
+      freeStartTime = busyBlockObj.end;
+    })
+    weekFreeTimes.push(todaysFreeTimes);
   })
+  console.log(weekFreeTimes);
 }
 
-availabilityHelper([[{start: "2017-07-18T16:00:00.000Z", end: "2017-07-18T16:30:00.000Z"}, {start: "2017-07-18T16:20:00.000Z", end: "2017-07-18T16:40:00.000Z"}, {start: "2017-07-18T17:00:00.000Z", end: "2017-07-18T17:30:00.000Z"}, {start: "2017-07-18T18:20:00.000Z", end: "2017-07-18T18:40:00.000Z"}]])
+findFreeTimes([[{start: "2017-07-18T16:00:00.000Z", end: "2017-07-18T16:30:00.000Z"}, {start: "2017-07-18T16:20:00.000Z", end: "2017-07-18T16:40:00.000Z"}, {start: "2017-07-18T17:00:00.000Z", end: "2017-07-18T17:30:00.000Z"}, {start: "2017-07-18T18:20:00.000Z", end: "2017-07-18T18:40:00.000Z"}],
+[{start: "2017-07-19T16:00:00.000Z", end: "2017-07-19T16:30:00.000Z"}, {start: "2017-07-19T16:20:00.000Z", end: "2017-07-19T16:40:00.000Z"}, {start: "2017-07-19T17:00:00.000Z", end: "2017-07-19T17:30:00.000Z"}, {start: "2017-07-19T18:20:00.000Z", end: "2017-07-19T18:40:00.000Z"}]])
 
 module.exports = {
   availabilityHelper: availabilityHelper
