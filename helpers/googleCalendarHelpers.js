@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 
-var Models = require('./models/models');
+var Models = require('../models/models');
 var User = Models.User;
 var Task = Models.Task;
 var Meeting = Models.Meeting;
@@ -16,7 +16,7 @@ var OAuth2 = google.auth.OAuth2;
 var fs = require('fs')
 
 var { sendInteractiveMessage } = require('./interactiveMessageHelper');
-var {scheduleMeetingMFour} = require('./milestoneFour.js')
+var { scheduleMeetingMFour } = require('./milestoneFour.js')
 
 function areThereConflicts(conflicts) {
   return conflicts.reduce(function(total, singleUser) {
@@ -139,7 +139,7 @@ function addDay(date) {
 
 
 
-function addToGoogle(slackId, res, web, date, rtm) {
+function addToGoogle(slackId, res, web, rtm, date) {
     //set up auth
     var auth = new googleAuth();
     var googleAuthorization = getGoogleAuth();
@@ -201,7 +201,8 @@ function addToGoogle(slackId, res, web, date, rtm) {
                 }
                 console.log('Event created: %s', event.htmlLink);
                 user.pendingRequest = '';
-                user.save(function(user) {
+                user.save()
+                .then(function(user) {
                   return(event);
                 })
                 res.send('Okay request has been submitted successfully!');

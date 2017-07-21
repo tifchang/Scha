@@ -1,4 +1,4 @@
-var Models = require('./models/models');
+var Models = require('../models/models');
 var User = Models.User;
 var Task = Models.Task;
 var Meeting = Models.Meeting;

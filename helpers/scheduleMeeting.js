@@ -1,4 +1,4 @@
-var Models = require('./models/models');
+var Models = require('../models/models');
 var User = Models.User;
 var Task = Models.Task;
 var Meeting = Models.Meeting;
@@ -107,13 +107,10 @@ function scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAu
           }
           console.log('Event created: %s', event.htmlLink);
           user.pendingRequest = '';
-          user.save(function(user) {
+          user.save()
+          .then(function(user) {
             res.send('Okay request has been submitted successfully!');
-            user.pendingRequest = '';
-            user.save(function(user) {
-              return(event);
-            })
-            // return "yay";
+            return (event);
           })
         });
       }
