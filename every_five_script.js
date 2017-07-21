@@ -111,6 +111,7 @@ function checkPendingMeetings() {
         console.log('schedule meeting');
       }
     }
+    process.exit();
     //what return here? --> the users array
 
   })
@@ -133,3 +134,4 @@ function checkPendingMeetings() {
 //     //add to google
 //   }
 // }
+checkPendingMeetings();
