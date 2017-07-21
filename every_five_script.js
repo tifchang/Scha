@@ -117,31 +117,32 @@ function checkPendingMeetings() {
     return Promise.all(p);
   })
   .then(function(objs) {
+    var axiosPromises = [];
     for (var i = 0; i < objs.length; i++) {
       if (!objs[i].result) {
         console.log('schedule meeting', objs[i].user);
         //actually schedule the meeting
-        axios.post('http://d31adc8e.ngrok.io/message', {
-          params: {
-            payload: {
-              callback_id: objs[i].user.slackId,
-              actions: [{value: 'good'}]
-            }
-          }
-        })
-        .then(resp => {
-          //console.log('sent axios request', resp);
-          console.log('hi');
-          process.exit();
-        })
-        .catch(err => {
-          //console.log('error sending axios request', err);
-          console.log('err');
-          process.exit();
-        })
+        axiosPromises.push(axios.post('http://d31adc8e.ngrok.io/message', {
+          payload: JSON.stringify({
+            callback_id: objs[i].user.slackId,
+            actions: [{value: 'good'}]
+          })
+        }))
       }
     }
+    return Promise.all(axiosPromises);
   })
+  .then(resp => {
+    console.log('sent axios request', resp);
+    // console.log('hi');
+    process.exit();
+  })
+  .catch(err => {
+    console.log('error sending axios request', err);
+    // console.log('err');
+    process.exit();
+  });
+}
 
 
 // // TO GO IN THE ROUTE
