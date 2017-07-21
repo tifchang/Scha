@@ -109,6 +109,10 @@ function scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAu
           user.pendingRequest = '';
           user.save(function(user) {
             res.send('Okay request has been submitted successfully!');
+            user.pendingRequest = '';
+            user.save(function(user) {
+              return(event);
+            })
             // return "yay";
           })
         });

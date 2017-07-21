@@ -7,17 +7,19 @@ var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client
 
 //param: param: must take in organizer's slackId
 // this function makes sure every person on the attendees list has an account
-function checkCalAccess(slackId, rtm) {
+function checkCalAccess(slackId, web, rtm) {
   User.findOne({slackId: slackId})
   .then((organizer) => {
     let slackIdArr = [];
     for (var key in JSON.parse(organizer.pendingRequest).conversions) {
+      console.log('conversions', JSON.parse(organizer.pendingRequest).conversions);
       slackIdArr.push(JSON.parse(organizer.pendingRequest).conversions[key].substring(2, 11))
     }
     var fullUserArr = slackIdArr.map((id) => {
       let slackDmId;
       if (rtm.dataStore.getDMByUserId(id)) {
-        slackDmId = rtm.dataStore.getDMByUserId(id);
+        slackDmId = rtm.dataStore.getDMByUserId(id).id;
+        console.log('1', slackDmId);
       } else {
         web.im.open(id, function(err, resp) {
           if (err) {
@@ -32,19 +34,28 @@ function checkCalAccess(slackId, rtm) {
         slackDmId: slackDmId
       }
     })
+    console.log('fullUserArr', fullUserArr);
     fullUserArr.forEach((userObj) => {
-      User.find({slackId: userObj.slackId})
+      User.findOne({slackId: userObj.slackId})
       .then((user) => {
+        console.log('user', user);
         if (!user) {
-          user = new User({
+          new User({
             slackId: userObj.slackId,
             slackDmId: userObj.slackDmId
-          }).save();
-        }
-        if (!user.google) {
-          rtm.sendMessage(`Hey! Someone is inviting you to a meeting.
+          }).save()
+          .then(user => {
+            console.log('user2', user);
+            web.chat.postMessage(user.slackDmId, `Hey! Someone is inviting you to a meeting.
+              Please visit http://d31adc8e.ngrok.io/connect?user=${user._id}
+              to setup Google Calendar`);
+              return;
+          })
+        } else if (!user.google) {
+          console.log(3, user);
+          web.chat.postMessage(user.slackDmId, `Hey! Someone is inviting you to a meeting.
             Please visit http://d31adc8e.ngrok.io/connect?user=${user._id}
-            to setup Google Calendar`, user.slackDmId);
+            to setup Google Calendar`);
             return;
           }
         })
@@ -120,23 +131,18 @@ function checkCalAccess(slackId, rtm) {
         res.send('on no one of your invitees has not given permission!');
         inFourHours(slackId)
         .then((isInFourHours) => {
+          var slackDmId = user.slackDmId;
           if (isInFourHours) {
             console.log('getDMByUserId', user.slackDmId);
-            var slackDmId = user.slackDmId;
-            console.log('should print here');
             web.chat.postMessage(slackDmId, `DAMN SON. You can't schedule it so soon! Meeting must be at least four hours from now.`)
           } else {
-            console.log('should not print here');
             web.chat.postMessage(slackDmId, `Yo posse has been notified for calendar access. We will try to create
-                 the event if your posse accepts within two hours.`)
-            //prompt requester that the attendees must be notified for calendar access
-
-
-            // and if not, it sends them the link.
+the event if your posse accepts within two hours.`)
 
             // checkCalAccess() checks each attendee to see if they have googleCal access.
             // and if not, it sends them the link.
-            // checkCalAccess(slackId, web)
+            checkCalAccess(slackId, web, rtm);
+
             //TODO: cronjobbbbb send choice
 
             //1: send links and check in 2 hours
@@ -152,47 +158,3 @@ function checkCalAccess(slackId, rtm) {
 module.exports = {
   scheduleMeetingMFour: scheduleMeetingMFour
 }
-
-
-
-
-
-
-
-
-
-
-
-//
-// }
-// attendees = attendees.map(invitee => (
-//   sds.getUserByName(invitee);
-// ))
-// attendees.forEach((attendee) => {
-//   User.findOne({slackId: attendee.slackId})
-//   .then((person) => {
-//     if (!person) {
-//       new User({
-//         slackId: attendee.slackId,
-//         slackDmId: attendee.slackDmId,
-//       }).save();
-//     } else if (!person.google) {
-//       rtm.sendMessage(`Hey! Someone is inviting you to a meeting.
-//         Please visit http://d31adc8e.ngrok.io/connect?user=${person._id}
-//         to setup Google Calendar`, person.slackDmId);
-//         return;
-//       }
-//     }
-//   })
-//   .catch((err) => {
-//     console.log('ERROR', err);
-//   })
-// })
-// }
-// //////
-// var sds = new slackDataStore()
-//
-// var invitees = pending['given-name']
-// var inviteeArr = invitees.map((invitee) => (
-//   sds.getUserByName(invitee);
-// ))

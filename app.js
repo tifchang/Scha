@@ -48,6 +48,11 @@ app.post('/message', function (req, res, next) {
   var slackId = JSON.parse(req.body.payload).callback_id;
   if (JSON.parse(req.body.payload).actions[0].value === 'bad') {
     res.send('Okay I canceled your request!');
+    User.findOne({slackId: slackId})
+    .then(user => {
+      user.pendingRequest = '';
+      user.save()
+    })
   } else if (JSON.parse(req.body.payload).actions[0].value === 'good') {
     addToGoogle(slackId, res, web, null, rtm);
 

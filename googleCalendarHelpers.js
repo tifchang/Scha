@@ -196,6 +196,7 @@ function addToGoogle(slackId, res, web, date, rtm) {
             }, function(err, event) {
                 if (err) {
                     console.log('There was an error contacting the Calendar service: ' + err);
+                    res.send('Oh no there was an error with your connection!');
                     return err;
                 }
                 console.log('Event created: %s', event.htmlLink);
@@ -203,6 +204,7 @@ function addToGoogle(slackId, res, web, date, rtm) {
                 user.save(function(user) {
                   return(event);
                 })
+                res.send('Okay request has been submitted successfully!');
             });
         } else if (pending.action === "meeting.add") {
           scheduleMeetingMFour(user.slackId, pending, user, res, web, date, calendar, auth, googleAuthorization, rtm, getAttendeeConflicts, getConflictsSevenDays, areThereConflicts);
