@@ -1,4 +1,13 @@
-function scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAuthorization) {
+var Models = require('./models/models');
+var User = Models.User;
+var Task = Models.Task;
+var Meeting = Models.Meeting;
+
+// var {getAttendeeConflicts, getConflictsSevenDays, areThereConflicts} = require('./googleCalendarHelpers.js')
+
+var { sendInteractiveMessage } = require('./interactiveMessageHelper');
+
+function scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAuthorization, getAttendeeConflicts, getConflictsSevenDays, areThereConflicts) {
   var task = pending.subject;
   console.log('date', date);
   var time;

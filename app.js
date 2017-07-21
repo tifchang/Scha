@@ -14,6 +14,7 @@ var OAuth2 = google.auth.OAuth2;
 var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 
 var rtm = new RtmClient(process.env.BOT_TOKEN);
+rtm.start();
 
 var web = new WebClient(process.env.BOT_TOKEN);
 

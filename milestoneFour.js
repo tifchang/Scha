@@ -3,15 +3,16 @@ var User = Models.User;
 var Task = Models.Task;
 var Meeting = Models.Meeting;
 
+var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 
 //param: param: must take in organizer's slackId
 // this function makes sure every person on the attendees list has an account
-function checkCalAccess(slackId) {
+function checkCalAccess(slackId, rtm) {
   User.findOne({slackId: slackId})
   .then((organizer) => {
     let slackIdArr = [];
-    for (var key in organizer.pendingRequest.conversions) {
-      slackIdArr.push(organizer.pendingRequest.conversions[key].substring(2, 11))
+    for (var key in JSON.parse(organizer.pendingRequest).conversions) {
+      slackIdArr.push(JSON.parse(organizer.pendingRequest).conversions[key].substring(2, 11))
     }
     var fullUserArr = slackIdArr.map((id) => {
       let slackDmId;
@@ -22,6 +23,7 @@ function checkCalAccess(slackId) {
           if (err) {
             console.log("ERROR IN OPENING CHANNEL", err);
           }
+          console.log('resp', resp);
           slackDmId = resp.channel.id;
         })
       }
@@ -55,11 +57,11 @@ function checkCalAccess(slackId) {
     .then((organizer) => {
       console.log('ORGANIZER', organizer);
       let slackIdArr = [];
-      for (var key in organizer.pendingRequest.conversions) {
-        slackIdArr.push(organizer.pendingRequest.conversions[key].substring(2, 11))
+      for (var key in JSON.parse(organizer.pendingRequest).conversions) {
+        slackIdArr.push(JSON.parse(organizer.pendingRequest).conversions[key].substring(2, 11))
       }
       return Promise.all(slackIdArr.map((id) => {
-        User.findOne({slackId: id})
+        return User.findOne({slackId: id})
         .then((user) => {
           console.log('USERRR', user);
           if (!user || !user.google) {
@@ -68,18 +70,21 @@ function checkCalAccess(slackId) {
             return true;
           }
         })
-      })).then((arr)=>{
-        console.log('ARRAY OF TRUE/FALSE', arr);
-        return arr.contains(false)
-      });
+      }))
+      // .then((arr)=>{
+      //   console.log('ARRAY OF TRUE/FALSE', arr);
+      //   return arr.includes(false)
+      // });
     })
   };
 
   function inFourHours(slackId) {
     return User.findOne({slackId: slackId})
     .then((user) => {
-      var date = user.pendingRequest.date;
-      var time = user.pendingRequest.time;
+      var date = JSON.parse(user.pendingRequest).date;
+      console.log('date', date);
+      var time = JSON.parse(user.pendingRequest).time;
+      console.log('time', time);
       var hours = time.substring(0, 2);
       var minutes = time.substring(3, 5);
       var seconds = time.substring(6, 8);
@@ -90,9 +95,8 @@ function checkCalAccess(slackId) {
       var day = date.substring(8, 10);
 
       var meeting = new Date(year, month, day, hours, minutes, seconds, milsecs)
-      var now = new Date()
-      now.setHours(now.getHours() + 4)
-      if (now.getTime() < meeting.getTime()) {
+
+      if (meeting.getTime() - new Date().getTime() < 3600000) {
         return true;
       } else {
         return false;
@@ -102,28 +106,37 @@ function checkCalAccess(slackId) {
 
   var {scheduleMeeting} = require('./scheduleMeeting');
 
-  function scheduleMeetingMFour(slackId, pending, user, res, web, date, calendar, auth, googleAuthorization, rtm) {
-    doAllHaveGoogle(slackId).then((bool) => {
-      if (bool) {
+  function scheduleMeetingMFour(slackId, pending, user, res, web, date, calendar, auth, googleAuthorization, rtm, getAttendeeConflicts, getConflictsSevenDays, areThereConflicts) {
+    doAllHaveGoogle(slackId)
+    .then((arr) => {
+      console.log('bool', arr);
+      var bool = arr.includes(false);
+      if (!bool) {
         //great! so everyone has google accounts.
         //we are assuming that addToGoogle will handle confirmation messages or
         //the availability policy
-        scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAuthorization);
+        scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAuthorization, getAttendeeConflicts, getConflictsSevenDays, areThereConflicts);
       } else {
-        inFourHours(slackId).then((isInFourHours) => {
-          if (inFourHours) {
-            var slackDmId = rtm.dataStore.getDMByUserId(slackId).id
-            rtm.sendMessage(`DAMN SON. You can't schedule it so soon! Meeting must be at least four hours from now.`, slackDmId)
+        res.send('on no one of your invitees has not given permission!');
+        inFourHours(slackId)
+        .then((isInFourHours) => {
+          if (isInFourHours) {
+            console.log('getDMByUserId', user.slackDmId);
+            var slackDmId = user.slackDmId;
+            console.log('should print here');
+            web.chat.postMessage(slackDmId, `DAMN SON. You can't schedule it so soon! Meeting must be at least four hours from now.`)
           } else {
+            console.log('should not print here');
+            web.chat.postMessage(slackDmId, `Yo posse has been notified for calendar access. We will try to create
+                 the event if your posse accepts within two hours.`)
             //prompt requester that the attendees must be notified for calendar access
-            rtm.sendMessage(`Yo posse has been notified for calendar access. We will try to create
-              the event if your posse accepts within two hours.`, slackDmId)
+
 
             // and if not, it sends them the link.
 
             // checkCalAccess() checks each attendee to see if they have googleCal access.
             // and if not, it sends them the link.
-            checkCalAccess(slackId)
+            // checkCalAccess(slackId, web)
             //TODO: cronjobbbbb send choice
 
             //1: send links and check in 2 hours

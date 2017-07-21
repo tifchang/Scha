@@ -16,9 +16,7 @@ var OAuth2 = google.auth.OAuth2;
 var fs = require('fs')
 
 var { sendInteractiveMessage } = require('./interactiveMessageHelper');
-
-var { scheduleMeeting } = require('./scheduleMeeting');
-
+var {scheduleMeetingMFour} = require('./milestoneFour.js')
 
 function areThereConflicts(conflicts) {
   return conflicts.reduce(function(total, singleUser) {
@@ -139,7 +137,6 @@ function addDay(date) {
     return result.toISOString().substring(0, 10);
 }
 
-var {scheduleMeetingMFour} = require('./milestoneFour.js')
 
 
 function addToGoogle(slackId, res, web, date, rtm) {
@@ -208,7 +205,7 @@ function addToGoogle(slackId, res, web, date, rtm) {
                 })
             });
         } else if (pending.action === "meeting.add") {
-          scheduleMeetingMFour(user.slackId, pending, user, res, web, date, calendar, auth, googleAuthorization, rtm);
+          scheduleMeetingMFour(user.slackId, pending, user, res, web, date, calendar, auth, googleAuthorization, rtm, getAttendeeConflicts, getConflictsSevenDays, areThereConflicts);
         }
     })
     .catch(function(err) {
