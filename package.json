@@ -21,16 +21,11 @@
     "google-auth-library": "^0.10.0",
     "googleapis": "^20.1.0",
     "mongoose": "^4.11.3",
-<<<<<<< HEAD
     "ngrok-cli": "^1.0.3",
-    "nodemon": "^1.11.0",
-    "request": "2.56.x"
-=======
     "nodemon": "^1.11.0",
     "pg": "^7.0.1",
     "request": "2.56.x",
     "sendgrid": "^5.1.2"
->>>>>>> everythingaud
   },
   "bugs": {
     "url": "https://github.com/tifchang/sachathescheduler/issues"

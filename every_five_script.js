@@ -1,5 +1,9 @@
 var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 var mongoose = require('mongoose');
+var axios = require('axios');
+mongoose.Promise = global.Promise;
+mongoose.connect(process.env.MONGODB_URI);
+mongoose.connection.on('mongoose error', console.error);
 
 //var bot_token = 'xoxb-214942281522-RCYUWaxsruZO4AlCtjBh22lf';
 var bot_token = process.env.BOT_TOKEN;
@@ -8,7 +12,7 @@ var bot_token = process.env.BOT_TOKEN;
 var web = new WebClient(bot_token);
 
 var Models = require('./models/models');
-var Task = Models.Task
+var User = Models.User
 
 
 //sends interactive message
@@ -59,17 +63,16 @@ function checkOverTime(user) {
 function checkHasAccess(slackId) {
   return new Promise(function(resolve, reject) {
     User.findOne({slackId: slackId})
-    .then((err, user) => {
-      if (err) {
-        console.log('Error: ', err);
-        reject(err);
+    .then(user => {
+      if (!user || !user.google) {
+        resolve(false);
       } else {
-        if (!user || !user.google) {
-          resolve(false);
-        } else {
-          resolve(true);
-        }
+        resolve(true);
       }
+    })
+    .catch(function(err) {
+      console.log('Error: ', err);
+      reject(err);  
     })
   });
 };
@@ -79,8 +82,8 @@ function checkHasAccess(slackId) {
  * checks for pending meetings
  */
 function checkPendingMeetings() {
-  User.find()
-  .then((err, users) => {
+  User.find({})
+  .then(users => {
     var resultArr = users.map(user => {
       if (user.pendingRequest) {
         if (checkOverTime(user)) {
@@ -95,27 +98,50 @@ function checkPendingMeetings() {
             atendees.push(JSON.parse(user.pendingRequest).conversions[key].substring(2, 11))
           }
           var promises = atendees.map(atendee => (
-            checkHasAccess(atendee);
+            checkHasAccess(atendee)
           ));
-          return Promise.all(promises).then(arr=>({
-            user: user,
-            result: arr.includes(false)
-          }))
-            //this is return value of each user map
+          return Promise.all(promises).then(arr=>{
+            return {
+              user: user,
+              result: arr.includes(false)
+            }
+          })
         }
       }
-    }))
-    for (var i = 0; i < resultArr.length; i++) {
-      if (resultArr[i] && !resultArr[i].result) {
-        //schedule meeting
-        console.log('schedule meeting');
+    })
+
+    console.log('resultArr', resultArr);
+    console.log('before for loop');
+    var p = resultArr.filter(i => i);
+    console.log('P', p)
+    return Promise.all(p);
+  })
+  .then(function(objs) {
+    for (var i = 0; i < objs.length; i++) {
+      if (!objs[i].result) {
+        console.log('schedule meeting', objs[i].user);
+        //actually schedule the meeting
+        axios.post('http://d31adc8e.ngrok.io/message', {
+          params: {
+            payload: {
+              callback_id: objs[i].user.slackId,
+              actions: [{value: 'good'}]
+            }
+          }
+        })
+        .then(resp => {
+          //console.log('sent axios request', resp);
+          console.log('hi');
+          process.exit();
+        })
+        .catch(err => {
+          //console.log('error sending axios request', err);
+          console.log('err');
+          process.exit();
+        })
       }
     }
-    process.exit();
-    //what return here? --> the users array
-
   })
-}
 
 
 // // TO GO IN THE ROUTE
