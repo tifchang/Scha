@@ -29,13 +29,12 @@ var OAuth2 = google.auth.OAuth2;
 //THIS ROUTE WILL BE CALLED BY INTERACTIVE MESSAGES
 //THIS IS SET AT https://api.slack.com/apps/A69C96JEM/interactive-messages
 router.post('/message', function (req, res, next) {
-  console.log('ROUTE IS HIT');
-  console.log('payload', req.body);
   //RETRIEVE SLACKID FROM THE BODY OF THE POST REQUEST
   var slackId = JSON.parse(req.body.payload).callback_id;
 
   //IF THE USER CLICKED NO AKA. THEY WANT TO CANCEL A REQUEST
   if (JSON.parse(req.body.payload).actions[0].value === 'bad') {
+    console.log('here3', JSON.parse(req.body.payload).actions[0].value);
     //RESPOND TO THE POST REQUEST AND DM THE USER
     res.send('Okay I canceled your request!');
 
@@ -56,7 +55,6 @@ router.post('/message', function (req, res, next) {
     // RES SO THE HELPER CAN CALL RES.SEND WITH THE CORRECT MESSAGE
     // WEB AND RTM SO WE CAN SEND MESSAGES
 
-    console.log();
     addToGoogle(slackId, res, web, rtm);
   } else {
     //THIS CASE WILL BE CALLED WHEN A USER IS CHOOSING AN ALTERNATE DATE

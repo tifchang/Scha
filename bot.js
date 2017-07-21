@@ -45,6 +45,8 @@ rtm.on(RTM_EVENTS.MESSAGE, (msg) => {
     //IF THE USER DOES EXIST JUST RETURN THE USER
     //BECAUSE USER IS NOT A PROMISE A .THEN() WILL JUST RECEIVE USER AS
     //A FUNCTION PARAMETER
+    // user.pendingRequest = '';
+    // user.save();
     return user;
   })
   .then(function(user) {
@@ -129,6 +131,7 @@ Please visit http://d31adc8e.ngrok.io/connect?user=${user._id} to setup Google C
         //SAVE ALL ACTION DATA TO THE MONGO USER'S PENDING REQUEST
         //AND SAVE USER
         user.pendingRequest = JSON.stringify(Object.assign({}, (res.data.result).parameters, {action: 'meeting.add', conversions: toStore}));
+        toStore = {};
         user.save()
         .then(function(user) {
           //SAVE THE CONFIRMATION MESSAGE INTO A SPEECH VARIABLE

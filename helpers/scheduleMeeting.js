@@ -3,11 +3,9 @@ var User = Models.User;
 var Task = Models.Task;
 var Meeting = Models.Meeting;
 
-// var {getAttendeeConflicts, getConflictsSevenDays, areThereConflicts} = require('./googleCalendarHelpers.js')
-
 var { sendInteractiveMessage } = require('./interactiveMessageHelper');
 
-function scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAuthorization, getAttendeeConflicts, getConflictsSevenDays, areThereConflicts) {
+function scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAuthorization, getAttendeeConflicts, getFreeTimes, areThereConflicts) {
   var task = pending.subject;
   console.log('date', date);
   var time;
@@ -79,7 +77,7 @@ function scheduleMeeting(pending, user, res, web, date, calendar, auth, googleAu
       var noConflicts = areThereConflicts(conflicts);
       //if there is a conflict
       if (!noConflicts) {
-        getConflictsSevenDays(start, mongoInformation)
+        getFreeTimes(start, mongoInformation)
         .then(function(freeTimesArray) {
           res.send('Oh no you have a conflict!');
           sendInteractiveMessage(web, user, freeTimesArray);
