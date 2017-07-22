@@ -1,21 +1,22 @@
 var { CLIENT_EVENTS, RTM_EVENTS, RtmClient, WebClient } = require('@slack/client');
 var mongoose = require('mongoose');
 var axios = require('axios');
+
+//setup mongoose connection
 mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGODB_URI);
 mongoose.connection.on('mongoose error', console.error);
 
-//var bot_token = 'xoxb-214942281522-RCYUWaxsruZO4AlCtjBh22lf';
+//setup bot
 var bot_token = process.env.BOT_TOKEN;
-// var rtm = new RtmClient(bot_token);
-
 var web = new WebClient(bot_token);
 
+//require in models
 var Models = require('./models/models');
 var User = Models.User
 
 
-//sends interactive message
+//sends interactive message to the requester
 function afterSendInvites(channel) {
   var msg = "Sounds good! What if I can't obtain access from the invitees within 2 hours?"
   web.chat.postMessage(channel, msg, {
@@ -47,6 +48,7 @@ function afterSendInvites(channel) {
 
 /*
  * check if request has been pending for more than 2 hours
+ * returns true if yes, otherwise false
  */
 function checkOverTime(user) {
   var createdAt = new Date(JSON.parse(user.pendingRequest).createdAt);
@@ -60,6 +62,7 @@ function checkOverTime(user) {
 
 
 // check if user has access to google calendar
+// returns true if yes, otherwise false
 function checkHasAccess(slackId) {
   return new Promise(function(resolve, reject) {
     User.findOne({slackId: slackId})
@@ -79,27 +82,36 @@ function checkHasAccess(slackId) {
 
 
 /*
- * checks for pending meetings
+ * checks for pending meetings within user objects
  */
 function checkPendingMeetings() {
+  //find all users
   User.find({})
   .then(users => {
     var resultArr = users.map(user => {
+      // check for pending request on user model
       if (user.pendingRequest) {
+        // if request has gone for over two hours, prompt the requester for additional actions
         if (checkOverTime(user)) {
-          //audrey's code
           afterSendInvites(user.slackDmId);
-          //what is this going to return?
           return;
         } else {
-          //TODO: get atendees
-          let atendees = [];
+          // retrieve slack ids of the members invited to the meeting
+          let attendees = [];
           for (var key in JSON.parse(user.pendingRequest).conversions) {
-            atendees.push(JSON.parse(user.pendingRequest).conversions[key].substring(2, 11))
+            attendees.push(JSON.parse(user.pendingRequest).conversions[key].substring(2, 11))
           }
-          var promises = atendees.map(atendee => (
-            checkHasAccess(atendee)
+
+          // map each slack id to a promise which responds with a boolean value
+          var promises = attendees.map(attendee => (
+            checkHasAccess(attendee)
           ));
+
+          /* 
+           * return a promise that converts the promises array into an array of objects
+           * this object contains the user object and a boolean that indicates 
+           * whether or not all invitees have google calendar access
+           */
           return Promise.all(promises).then(arr=>{
             return {
               user: user,
@@ -110,18 +122,18 @@ function checkPendingMeetings() {
       }
     })
 
-    console.log('resultArr', resultArr);
-    console.log('before for loop');
+    //filter out requests that have gone over the time limit
     var p = resultArr.filter(i => i);
-    console.log('P', p)
+
+    //turn the promises into an array
     return Promise.all(p);
   })
+  //receive the objects
   .then(function(objs) {
     var axiosPromises = [];
     for (var i = 0; i < objs.length; i++) {
       if (!objs[i].result) {
-        console.log('schedule meeting', objs[i].user);
-        //actually schedule the meeting
+        // push axios requests that will schedule meetings to promise array
         axiosPromises.push(axios.post('http://d31adc8e.ngrok.io/message', {
           payload: JSON.stringify({
             callback_id: objs[i].user.slackId,
@@ -130,35 +142,20 @@ function checkPendingMeetings() {
         }))
       }
     }
+    // executes all axios promises
     return Promise.all(axiosPromises);
   })
+  // when promises are finished executing, exit the process
   .then(resp => {
     console.log('sent axios request', resp);
-    // console.log('hi');
     process.exit();
   })
+  // if an error is caught, still exit the process because it should not hang
   .catch(err => {
     console.log('error sending axios request', err);
-    // console.log('err');
     process.exit();
   });
 }
 
-
-// // TO GO IN THE ROUTE
-// function route() {
-//   else if (value === "Nevermind") {
-//     //if nevermind cancel the whole event
-//     //do not call add togoogle
-//   }
-//   else if (value === "Cancel the meeting") {
-//     //if in 2 hours invitees dont have access, cancel the event
-//     //OR: donmt schedule the event until 2 hours later
-//         //if invitees still dont have access, cancel request
-//         //add to google
-//       }
-//       else if (value === "Schedule it anyway") {
-//     //add to google
-//   }
-// }
+// check pending meetings
 checkPendingMeetings();
