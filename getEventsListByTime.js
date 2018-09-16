@@ -2,7 +2,6 @@ var task = pending.subject;
 var date = pending.date;
 var time = pending.time;
 var invitees = pending['given-name'];
-
 var hours = time.substring(0, 2);
 var minutes = time.substring(3, 5);
 var seconds = time.substring(6, 8);
@@ -14,7 +13,6 @@ var day = date.substring(8, 10);
 
 var start = new Date(year, month, day, hours, minutes, seconds, milsecs)
 var end = new Date(start.getTime() + 30 * 60 * 1000)
-
 // PASS IN ATTENDEES ARRAY
 // THIS FUNCTION RETURNS AN ARRAY WITH CONFLICTS FOR THE REQUESTED TIME
 // params: start = requested start datetime of mtg req, end = requested end datetime of mtg req
@@ -33,50 +31,17 @@ function getAttendeeConflicts(attendees, start, end) {
       timeMax: end.toISOString(),
       timeZone: "America/Los_Angeles",
       alwaysIncludeEmail: true,
-    }, function(err, response) {
+    })
+    .then((err, response) => {
       if (err) {
         console.log('ERROR IN RETRIEVING CONFLICTS': err);
       }
       if (response.items.length > 0) {
-        conflictsArr.push(response.items);
+        conflictsArr = conflictsArr.concat(response.items);
+        return conflictsArr;
+      } else {
+        return conflictsArr;
       }
-    })
-  })
-  return conflictsArr;
-}
-
-// THIS FUNCTION RETURNS AN ARRAY WITH NESTED ARRAYS INDEXED BY DAY
-// EACH OBJECTS IN EACH DAY REPRESENTS A BUSY COMPONENT
-// EX. [[{start: 'datetime', end: 'datetime'}, {start: 'datetime', end: 'datetime'}, ...], []]
-function getConflictsSevenDays(attendees) {
-  let sevenDaysConflictsArr = [];
-<<<<<<< HEAD
-  let today = new Date()
-
-  for (var i = 0; i < 7; i++) {
-    let newDay = today.setDate(today.getDate() + i)
-    let newDate = new Date(newDay).toISOString()
-
-  }
-=======
-  let today = new Date;
-
-  for (var i = 0; i < 7; i++) {
-    let newDay = today.setDate(today.getDate() + i);
-    let newDate = new Date(newDay).toISOString();
-
-  }
-
-
->>>>>>> carokun
-  attendees.forEach((user) => {
-    var gAuthUser = getGoogleAuth();
-    gAuthUser.setCredentials({
-      access_token: user.google.id_token,
-      refresh_token: user.google.refresh_token
-    })
-    calendar.events.list({
-
     })
   })
 }
